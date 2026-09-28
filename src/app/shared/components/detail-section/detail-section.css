@@ -1,0 +1,16 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.detail-section {
+  height: 100%;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.detail-section h2 {
+  margin-top: 0;
+  font-size: 1rem;
+}

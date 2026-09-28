@@ -22,4 +22,24 @@ describe('PortfolioList', () => {
     expect(cards[0]?.textContent).toContain("Nombre d'actifs : 24");
     expect(cards[0]?.textContent).toContain('Valeur actuelle : 1250000');
   });
+
+  it('should pass the selected portfolio ID to the parent when details are requested', async () => {
+    await TestBed.configureTestingModule({
+      imports: [PortfolioList],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(PortfolioList);
+    fixture.detectChanges();
+
+    const onViewDetails = vi.spyOn(fixture.componentInstance, 'onViewDetails');
+    const viewDetailsButton = (
+      fixture.nativeElement as HTMLElement
+    ).querySelector<HTMLButtonElement>('app-portfolio-card button');
+
+    expect(viewDetailsButton?.textContent).toContain('Voir le détail');
+    viewDetailsButton?.click();
+
+    expect(onViewDetails).toHaveBeenCalledOnce();
+    expect(onViewDetails).toHaveBeenCalledWith('p1');
+  });
 });

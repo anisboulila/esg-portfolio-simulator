@@ -5,19 +5,21 @@
   </header>
 
   <section class="summary" aria-label="Résumé des portefeuilles">
-    <article class="summary-card">
-      <h2>Portefeuilles</h2>
-      <p>{{ portfolioSummary().count }}</p>
-    </article>
+    <app-detail-section class="summary-card" title="Portefeuilles">
+      <dl class="summary-metrics">
+        <div>
+          <dt>Nombre de portefeuilles</dt>
+          <dd>{{ portfolioSummary().count }}</dd>
+        </div>
+        <div>
+          <dt>Valeur totale</dt>
+          <dd>{{ portfolioSummary().totalValue }} €</dd>
+        </div>
+      </dl>
+    </app-detail-section>
 
-    <article class="summary-card">
-      <h2>Valeur totale</h2>
-      <p>{{ portfolioSummary().totalValue }} €</p>
-    </article>
-
-    <article class="summary-card">
-      <h2>Score ESG moyen</h2>
-      <p>{{ portfolioSummary().averageEsgScore }}</p>
-    </article>
+    <app-detail-section class="summary-card" title="Score ESG moyen">
+      <p class="summary-score">{{ portfolioSummary().averageEsgScore }} / 100</p>
+    </app-detail-section>
   </section>
 </section>

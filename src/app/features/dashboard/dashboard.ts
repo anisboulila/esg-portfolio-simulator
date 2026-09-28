@@ -1,7 +1,9 @@
 import { Component, computed, signal } from '@angular/core';
+import { DetailSection } from '../../shared/components/detail-section/detail-section';
 
 @Component({
   selector: 'app-dashboard',
+  imports: [DetailSection],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })

@@ -12,8 +12,10 @@ describe('Dashboard', () => {
 
     const summary = fixture.nativeElement as HTMLElement;
     expect(summary.querySelector('h1')?.textContent).toContain('Dashboard');
-    expect(summary.querySelectorAll('.summary-card')[0]?.textContent).toContain('3');
-    expect(summary.querySelectorAll('.summary-card')[1]?.textContent).toContain('1250000');
-    expect(summary.querySelectorAll('.summary-card')[2]?.textContent).toContain('78');
+    const sections = summary.querySelectorAll('app-detail-section');
+    expect(sections).toHaveLength(2);
+    expect(sections[0]?.textContent).toContain('3');
+    expect(sections[0]?.textContent).toContain('1250000');
+    expect(sections[1]?.textContent).toContain('78 / 100');
   });
 });

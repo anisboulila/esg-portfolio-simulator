@@ -16,23 +16,37 @@
 
 .summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
 }
 
 .summary-card {
-  border: 1px solid #ddd;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
+  min-width: 0;
 }
 
-.summary-card h2 {
-  margin-top: 0;
-  font-size: 1rem;
+.summary-metrics {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
 }
 
-.summary-card p {
-  margin-bottom: 0;
+.summary-metrics div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.summary-metrics dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.summary-score {
+  margin: 0;
   font-size: 2rem;
   font-weight: 700;
 }
