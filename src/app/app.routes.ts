@@ -1,17 +1,21 @@
 import { Routes } from '@angular/router';
+import { Dashboard } from './features/dashboard/dashboard';
+import { PortfolioDetail } from './features/portfolios/pages/portfolio-detail/portfolio-detail';
+import { PortfolioList } from './features/portfolios/portfolio-list';
 
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./features/dashboard/dashboard')
-        .then(m => m.Dashboard),
+    pathMatch: 'full',
+    component: Dashboard,
   },
   {
     path: 'portfolios',
-    loadComponent: () =>
-      import('./features/portfolios/portfolio-list').then(
-        m => m.PortfolioList
-      ),
+    pathMatch: 'full',
+    component: PortfolioList,
+  },
+  {
+    path: 'portfolios/:id',
+    component: PortfolioDetail,
   },
 ];

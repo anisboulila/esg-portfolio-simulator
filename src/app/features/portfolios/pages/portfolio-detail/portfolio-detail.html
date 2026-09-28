@@ -1,0 +1,28 @@
+<section class="portfolio-detail">
+  @if (portfolio(); as portfolio) {
+    <header class="portfolio-detail-header">
+      <h1>{{ portfolio.name }}</h1>
+      <p>{{ portfolio.description }}</p>
+    </header>
+
+    <dl class="portfolio-information">
+      <div>
+        <dt>Identifiant</dt>
+        <dd>{{ portfolio.id }}</dd>
+      </div>
+      <div>
+        <dt>Nombre d'actifs</dt>
+        <dd>{{ portfolio.assetCount }}</dd>
+      </div>
+      <div>
+        <dt>Valeur actuelle</dt>
+        <dd>{{ portfolio.currentValue }}</dd>
+      </div>
+    </dl>
+  } @else {
+    <h1>Portfolio introuvable</h1>
+    <p role="status">Le portfolio demandé n'existe pas.</p>
+  }
+
+  <a routerLink="/portfolios">Retour à la liste</a>
+</section>

@@ -1,10 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { PortfolioList } from './portfolio-list';
 
 describe('PortfolioList', () => {
   it('should render each portfolio through its card', async () => {
     await TestBed.configureTestingModule({
       imports: [PortfolioList],
+      providers: [provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(PortfolioList);
@@ -26,12 +28,15 @@ describe('PortfolioList', () => {
   it('should pass the selected portfolio ID to the parent when details are requested', async () => {
     await TestBed.configureTestingModule({
       imports: [PortfolioList],
+      providers: [provideRouter([])],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(PortfolioList);
     fixture.detectChanges();
 
-    const onViewDetails = vi.spyOn(fixture.componentInstance, 'onViewDetails');
+    const onViewDetails = vi
+      .spyOn(fixture.componentInstance, 'onViewDetails')
+      .mockImplementation(() => undefined);
     const viewDetailsButton = (
       fixture.nativeElement as HTMLElement
     ).querySelector<HTMLButtonElement>('app-portfolio-card button');

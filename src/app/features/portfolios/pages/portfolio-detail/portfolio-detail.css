@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.portfolio-detail-header {
+  margin-bottom: 2rem;
+}
+
+.portfolio-detail-header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.portfolio-detail-header p {
+  margin: 0;
+}
+
+.portfolio-information {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0 0 2rem;
+}
+
+.portfolio-information div {
+  min-width: 0;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.portfolio-information dt {
+  font-weight: 700;
+}
+
+.portfolio-information dd {
+  margin: 0.5rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.portfolio-detail a:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .portfolio-information {
+    grid-template-columns: 1fr;
+  }
+}
