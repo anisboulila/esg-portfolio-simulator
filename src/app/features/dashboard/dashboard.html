@@ -1,0 +1,23 @@
+<section class="dashboard">
+  <header class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p>Vue d'ensemble de vos portefeuilles ESG.</p>
+  </header>
+
+  <section class="summary" aria-label="Résumé des portefeuilles">
+    <article class="summary-card">
+      <h2>Portefeuilles</h2>
+      <p>{{ portfolioSummary().count }}</p>
+    </article>
+
+    <article class="summary-card">
+      <h2>Valeur totale</h2>
+      <p>{{ portfolioSummary().totalValue }} €</p>
+    </article>
+
+    <article class="summary-card">
+      <h2>Score ESG moyen</h2>
+      <p>{{ portfolioSummary().averageEsgScore }}</p>
+    </article>
+  </section>
+</section>

@@ -1,0 +1,10 @@
+<article class="portfolio-card">
+  <h2>{{ portfolio().name }}</h2>
+  <p>Identifiant : {{ portfolio().id }}</p>
+  <p>{{ portfolio().description }}</p>
+  <p>Nombre d'actifs : {{ portfolio().assetCount }}</p>
+  <p>Valeur actuelle : {{ portfolio().currentValue }}</p>
+    <button type="button" (click)="onViewDetails()">
+    Voir le détail
+  </button>
+</article>

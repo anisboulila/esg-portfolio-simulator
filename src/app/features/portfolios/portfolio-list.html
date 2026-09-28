@@ -1,0 +1,13 @@
+<section class="portfolio-list">
+  <header>
+    <h1>Portfolios</h1>
+    <p>Liste des portefeuilles disponibles.</p>
+  </header>
+
+  <section class="portfolio-grid" aria-label="Liste des portfolios">
+    @for (portfolio of portfolios; track portfolio.id) {
+      <app-portfolio-card [portfolio]="portfolio" (viewDetails)="onViewDetails($event)" />
+       
+    }
+  </section>
+</section>

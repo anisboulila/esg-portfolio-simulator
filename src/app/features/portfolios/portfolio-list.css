@@ -1,0 +1,27 @@
+:host {
+  display: block;
+}
+
+.portfolio-list header {
+  margin-bottom: 2rem;
+}
+
+.portfolio-list h1 {
+  margin-bottom: 0.5rem;
+}
+
+.portfolio-list header p {
+  margin: 0;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+}

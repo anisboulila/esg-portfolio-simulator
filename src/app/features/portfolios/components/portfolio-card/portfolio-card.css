@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+.portfolio-card {
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.portfolio-card h2 {
+  margin-top: 0;
+}
