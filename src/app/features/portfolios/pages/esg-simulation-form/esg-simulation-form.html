@@ -97,20 +97,16 @@
       }
     </div>
 
-    <button type="submit">Préparer la simulation</button>
+    <button type="submit" [disabled]="submissionStatus() === 'loading'">
+      {{ submissionStatus() === 'loading' ? 'Envoi en cours...' : 'Envoyer la simulation' }}
+    </button>
   </form>
 
-  @if (preparedRequest; as request) {
-    <section class="prepared-request" aria-live="polite">
-      <h2>Données de simulation préparées</h2>
-      <dl>
-        <div><dt>Portfolio</dt><dd>{{ request.portfolioId }}</dd></div>
-        <div><dt>Émissions de carbone</dt><dd>{{ request.carbonEmission }}</dd></div>
-        <div><dt>Investissement vert (%)</dt><dd>{{ request.greenInvestmentPercentage }}</dd></div>
-        <div><dt>Score social</dt><dd>{{ request.socialScore }}</dd></div>
-        <div><dt>Score de gouvernance</dt><dd>{{ request.governanceScore }}</dd></div>
-      </dl>
-    </section>
+  @if (submissionStatus() === 'success') {
+    <p role="status" aria-live="polite">Simulation envoyée avec succès.</p>
+  }
+  @if (submissionStatus() === 'error') {
+    <p role="alert">{{ submissionError() }}</p>
   }
 
   <a [routerLink]="['/portfolios', portfolioId]">Retour au portfolio</a>

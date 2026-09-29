@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SimulationRequest } from '../../../simulations/models/simulation-request';
+import { SimulationApiService } from '../../../simulations/services/simulation-api.service';
 
 type SimulationFormControls = {
   portfolioId: FormControl<string>;
@@ -19,6 +20,9 @@ type SimulationFormControls = {
 })
 export class EsgSimulationForm {
   private readonly route = inject(ActivatedRoute);
+  // Le composant injecte le service pour orchestrer l'action; il ne construit pas
+  // d'URL et ne fait aucun appel HTTP directement.
+  private readonly simulationApi = inject(SimulationApiService);
   protected readonly portfolioId = this.route.snapshot.paramMap.get('id') ?? '';
 
   // FormGroup représente le formulaire global : il regroupe les contrôles et expose
@@ -48,7 +52,8 @@ export class EsgSimulationForm {
   });
 
   protected submissionAttempted = false;
-  protected preparedRequest: SimulationRequest | null = null;
+  protected readonly submissionStatus = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
+  protected readonly submissionError = signal<string | null>(null);
 
   // La valeur est la donnée saisie; valid/invalid indique si elle respecte les règles.
   // touched passe à vrai après interaction puis perte de focus, tandis que dirty indique
@@ -77,13 +82,14 @@ export class EsgSimulationForm {
   }
 
   // La soumission commence par vérifier le FormGroup entier. En cas d'invalidité,
-  // markAllAsTouched() rend les erreurs visibles et aucun request n'est préparé.
+  // markAllAsTouched() rend les erreurs visibles et aucun appel API n'est lancé.
   onSubmit(): void {
     this.submissionAttempted = true;
-    this.preparedRequest = null;
+    this.submissionError.set(null);
 
     if (this.simulationForm.invalid) {
       this.simulationForm.markAllAsTouched();
+      this.submissionStatus.set('idle');
       return;
     }
 
@@ -101,14 +107,29 @@ export class EsgSimulationForm {
       return;
     }
 
-    this.preparedRequest = {
+    const request: SimulationRequest = {
       portfolioId: values.portfolioId,
       carbonEmission: values.carbonEmission,
       greenInvestmentPercentage: values.greenInvestmentPercentage,
       socialScore: values.socialScore,
       governanceScore: values.governanceScore,
     };
-    // TASK-015 prépare et expose le contrat typé uniquement; l'appel HTTP appartient
-    // à une tâche ultérieure, donc cette soumission ne déclenche aucune requête réseau.
+
+    // L'Observable ne lance l'opération que lorsqu'on s'y abonne. HttpClient et le
+    // mock contrôlé terminent chacun ce flux par une réponse ou une erreur.
+    this.submissionStatus.set('loading');
+    this.simulationApi.createSimulation(request).subscribe({
+      next: () => {
+        // Le résultat est reçu au contrat typé; son affichage et sa navigation
+        // appartiennent aux tâches dédiées au résultat.
+        this.submissionStatus.set('success');
+      },
+      error: () => {
+        // Ne jamais transmettre l'erreur réseau brute au template : elle peut contenir
+        // des détails techniques. La page n'expose qu'un message compréhensible.
+        this.submissionError.set('La simulation n’a pas pu être envoyée. Veuillez réessayer.');
+        this.submissionStatus.set('error');
+      },
+    });
   }
 }
