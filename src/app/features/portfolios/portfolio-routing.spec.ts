@@ -23,7 +23,7 @@ describe('Portfolio routing', () => {
     return { fixture, router };
   }
 
-  it('should navigate from the dashboard to the portfolio list', async () => {
+  it('should navigate from the dashboard to the lazy-loaded portfolio list', async () => {
     const { fixture, router } = await createAppAt('/');
     const portfolioLink = (
       fixture.nativeElement as HTMLElement

@@ -1,21 +1,25 @@
 import { Routes } from '@angular/router';
-import { Dashboard } from './features/dashboard/dashboard';
-import { PortfolioDetail } from './features/portfolios/pages/portfolio-detail/portfolio-detail';
-import { PortfolioList } from './features/portfolios/portfolio-list';
 
+// This file composes feature route trees; each feature owns its own route details.
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    component: Dashboard,
+    // Angular evaluates this dynamic import only when the dashboard route is visited,
+    // keeping the dashboard feature out of the initial application bundle.
+    loadChildren: () =>
+      import('./features/dashboard/dashboard.routes').then(
+        (feature) => feature.DASHBOARD_ROUTES,
+      ),
   },
   {
     path: 'portfolios',
-    pathMatch: 'full',
-    component: PortfolioList,
+    // The list and detail routes are loaded together as one portfolio feature boundary.
+    loadChildren: () =>
+      import('./features/portfolios/portfolios.routes').then(
+        (feature) => feature.PORTFOLIO_ROUTES,
+      ),
   },
-  {
-    path: 'portfolios/:id',
-    component: PortfolioDetail,
-  },
+  // Simulations has no implemented route tree yet, so no empty lazy feature is registered.
+  { path: '**', redirectTo: '' },
 ];
