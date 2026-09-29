@@ -23,12 +23,15 @@ export class EsgSimulationForm {
 
   // FormGroup représente le formulaire global : il regroupe les contrôles et expose
   // leur validité commune. Cette page garde ainsi toute la saisie au même endroit.
+  // Les règles numériques documentées sont exprimables avec required, min et max;
+  // les validators intégrés évitent d'ajouter une fonction maison inutile.
   protected readonly simulationForm = new FormGroup<SimulationFormControls>({
     // FormControl représente la valeur et l'état d'un champ précis. L'identifiant
-    // vient de la route, reste visible mais non modifiable, et demeure requis.
+    // vient de la route, reste visible mais non modifiable, et demeure requis. required
+      // seul accepte les espaces; pattern impose un caractère non blanc.
     portfolioId: new FormControl(this.portfolioId, {
       nonNullable: true,
-      validators: [Validators.required],
+      validators: [Validators.required, Validators.pattern(/\S/)],
     }),
     carbonEmission: new FormControl<number | null>(null, {
       validators: [Validators.required, Validators.min(0)],
@@ -60,6 +63,9 @@ export class EsgSimulationForm {
   protected errorMessage(control: FormControl<string | number | null>): string {
     if (control.hasError('required')) {
       return 'Ce champ est obligatoire.';
+    }
+    if (control.hasError('pattern')) {
+      return 'Saisissez un identifiant contenant au moins un caractère non blanc.';
     }
     if (control.hasError('min')) {
       return 'La valeur doit être supérieure ou égale à 0.';
