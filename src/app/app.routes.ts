@@ -20,6 +20,14 @@ export const routes: Routes = [
         (feature) => feature.PORTFOLIO_ROUTES,
       ),
   },
+  {
+    path: 'simulations',
+    // La feature Simulations est chargée seulement lors de sa première visite.
+    loadChildren: () =>
+      import('./features/simulations/simulations.routes').then(
+        (feature) => feature.SIMULATIONS_ROUTES,
+      ),
+  },
   // Simulations has no implemented route tree yet, so no empty lazy feature is registered.
   { path: '**', redirectTo: '' },
 ];

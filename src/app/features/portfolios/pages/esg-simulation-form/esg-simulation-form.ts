@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SimulationRequest } from '../../../simulations/models/simulation-request';
 import { SimulationApiService } from '../../../simulations/services/simulation-api.service';
 
@@ -20,6 +20,7 @@ type SimulationFormControls = {
 })
 export class EsgSimulationForm {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   // Le composant injecte le service pour orchestrer l'action; il ne construit pas
   // d'URL et ne fait aucun appel HTTP directement.
   private readonly simulationApi = inject(SimulationApiService);
@@ -119,10 +120,10 @@ export class EsgSimulationForm {
     // mock contrôlé terminent chacun ce flux par une réponse ou une erreur.
     this.submissionStatus.set('loading');
     this.simulationApi.createSimulation(request).subscribe({
-      next: () => {
-        // Le résultat est reçu au contrat typé; son affichage et sa navigation
-        // appartiennent aux tâches dédiées au résultat.
-        this.submissionStatus.set('success');
+      next: (result) => {
+        // L'identifiant retourné par l'API permet au Router d'ouvrir la page de résultat.
+        // La page chargera ensuite le même résultat par GET, y compris après un refresh.
+        void this.router.navigate(['/simulations', result.id]);
       },
       error: () => {
         // Ne jamais transmettre l'erreur réseau brute au template : elle peut contenir

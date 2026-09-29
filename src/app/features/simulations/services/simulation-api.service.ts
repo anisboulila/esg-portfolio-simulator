@@ -1,28 +1,12 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { API_BASE_URL, SIMULATION_API_MODE } from '../../../core/config/api.config';
-import { Portfolio } from '../../portfolios/models/portfolio';
+import { Observable, catchError, throwError } from 'rxjs';
+import { API_BASE_URL } from '../../../core/config/api.config';
 import { SimulationRequest } from '../models/simulation-request';
 import { SimulationResult } from '../models/simulation-result';
 
-const DEVELOPMENT_MOCK_PORTFOLIO: Portfolio = {
-  id: '',
-  name: 'Portfolio de démonstration',
-  description: 'Portfolio retourné par le mock de développement.',
-  assetCount: 0,
-  currentValue: 0,
-};
-
-const DEVELOPMENT_MOCK_RESULT: SimulationResult = {
-  id: 'dev-simulation-001',
-  portfolio: DEVELOPMENT_MOCK_PORTFOLIO,
-  environmentalScore: 70,
-  socialScore: 70,
-  governanceScore: 70,
-  globalScore: 70,
-  greenInvestmentPercentage: 0,
-};
+export class SimulationNotFoundError extends Error {}
+export class SimulationApiError extends Error {}
 
 // Le service centralise l'accès à l'API : le formulaire ne connaît ni HttpClient,
 // ni URL, ni détails de transport. Angular fournit HttpClient grâce à app.config.ts.
@@ -30,29 +14,35 @@ const DEVELOPMENT_MOCK_RESULT: SimulationResult = {
 export class SimulationApiService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
-  private readonly apiMode = inject(SIMULATION_API_MODE);
 
-  // Un Observable représente la réponse asynchrone. Le mode mock retourne le même
-  // contrat typé sans réseau; le mode HTTP délègue le POST à HttpClient.
+  // HttpClient transforme le POST en Observable typé : le serveur réel ou mock
+  // fournit la réponse JSON, sans transport simulé dans le code Angular.
   createSimulation(request: SimulationRequest): Observable<SimulationResult> {
-    if (this.apiMode === 'mock') {
-      // Ce résultat fixe illustre le contrat sans recalculer de score métier côté Angular.
-      return of({
-        ...DEVELOPMENT_MOCK_RESULT,
-        portfolio: {
-          ...DEVELOPMENT_MOCK_PORTFOLIO,
-          id: request.portfolioId,
-        },
-        greenInvestmentPercentage: request.greenInvestmentPercentage,
-      });
+    return this.http
+      .post<SimulationResult>(this.endpoint('/api/v1/esg/simulations'), request)
+      .pipe(catchError((error: unknown) => this.mapError(error)));
+  }
+
+  // GET charge le résultat officiel pour les accès directs et les refreshs de la route.
+  getSimulation(id: string): Observable<SimulationResult> {
+    return this.http
+      .get<SimulationResult>(
+        this.endpoint(`/api/v1/esg/simulations/${encodeURIComponent(id)}`),
+      )
+      .pipe(catchError((error: unknown) => this.mapError(error)));
+  }
+
+  private endpoint(path: string): string {
+    return `${this.baseUrl.replace(/\/+$/, '')}${path}`;
+  }
+
+  // La couche API convertit le statut HTTP connu en erreur applicative typée.
+  // Les pages peuvent distinguer 404 sans exposer la réponse brute du serveur.
+  private mapError(error: unknown): Observable<never> {
+    if (error instanceof HttpErrorResponse && error.status === 404) {
+      return throwError(() => new SimulationNotFoundError());
     }
 
-    // La base vient de l'injection de configuration plutôt que du composant.
-    // Le type générique décrit la réponse attendue et le backend reste autoritaire.
-    const normalizedBaseUrl = this.baseUrl.replace(/\/+$/, '');
-    return this.http.post<SimulationResult>(
-      `${normalizedBaseUrl}/api/v1/esg/simulations`,
-      request,
-    );
+    return throwError(() => new SimulationApiError());
   }
 }

@@ -1,0 +1,49 @@
+<section class="simulation-result-page">
+  @let state = resultState();
+
+  @if (state.status === 'loading') {
+    <h1>Résultat de simulation</h1>
+    <p role="status">Chargement du résultat...</p>
+  } @else if (state.status === 'not-found') {
+    <h1>Résultat introuvable</h1>
+    <p role="status">Aucun résultat de simulation ne correspond à cet identifiant.</p>
+  } @else if (state.status === 'error') {
+    <h1>Résultat indisponible</h1>
+    <p role="alert">Le résultat n'a pas pu être chargé. Veuillez réessayer.</p>
+  } @else if (state.status === 'success') {
+    <header>
+      <h1>Résultat de simulation</h1>
+      <p>{{ state.result.portfolio.name }}</p>
+    </header>
+
+    <section class="official-score" aria-labelledby="global-score-title">
+      <h2 id="global-score-title">Score ESG global officiel</h2>
+      <p>{{ state.result.globalScore }}</p>
+    </section>
+
+    <dl class="simulation-result-details">
+      <div>
+        <dt>Portfolio</dt>
+        <dd>{{ state.result.portfolio.name }} ({{ state.result.portfolio.id }})</dd>
+      </div>
+      <div>
+        <dt>Score environnemental</dt>
+        <dd>{{ state.result.environmentalScore }}</dd>
+      </div>
+      <div>
+        <dt>Score social</dt>
+        <dd>{{ state.result.socialScore }}</dd>
+      </div>
+      <div>
+        <dt>Score de gouvernance</dt>
+        <dd>{{ state.result.governanceScore }}</dd>
+      </div>
+      <div>
+        <dt>Investissement vert (%)</dt>
+        <dd>{{ state.result.greenInvestmentPercentage }}</dd>
+      </div>
+    </dl>
+  }
+
+  <a routerLink="/portfolios">Retour aux portfolios</a>
+</section>

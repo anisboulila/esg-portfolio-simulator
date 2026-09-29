@@ -1,10 +1,5 @@
 import { InjectionToken } from '@angular/core';
 
-export type SimulationApiMode = 'mock' | 'http';
-
 // Ces tokens séparent les valeurs d'environnement des composants et services.
-// app.config.ts fournit une URL et sélectionne explicitement le mode de développement.
+// app.config.ts fournit explicitement l'URL du mock en développement ou du backend en production.
 export const API_BASE_URL = new InjectionToken<string>('API_BASE_URL');
-export const SIMULATION_API_MODE = new InjectionToken<SimulationApiMode>(
-  'SIMULATION_API_MODE',
-);

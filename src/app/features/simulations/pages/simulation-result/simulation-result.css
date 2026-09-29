@@ -1,0 +1,66 @@
+:host {
+  display: block;
+}
+
+.simulation-result-page > header {
+  margin-bottom: 2rem;
+}
+
+.simulation-result-page > header h1 {
+  margin-bottom: 0.5rem;
+}
+
+.simulation-result-page > header p {
+  margin: 0;
+}
+
+.official-score {
+  margin-bottom: 2rem;
+  border-left: 4px solid currentColor;
+  padding: 1rem 1.25rem;
+}
+
+.official-score h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.official-score p {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.simulation-result-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0 0 2rem;
+}
+
+.simulation-result-details div {
+  min-width: 0;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.simulation-result-details dt {
+  font-weight: 700;
+}
+
+.simulation-result-details dd {
+  margin: 0.5rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.simulation-result-page a:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .simulation-result-details {
+    grid-template-columns: 1fr;
+  }
+}
