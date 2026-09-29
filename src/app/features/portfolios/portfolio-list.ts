@@ -6,6 +6,9 @@ import { PortfolioCard } from './components/portfolio-card/portfolio-card';
 import { Portfolio } from './models/portfolio';
 import { PortfolioService } from './services/portfolio.service';
 
+// Ces variantes représentent des états mutuellement exclusifs : une recherche ne peut
+// pas être simultanément en chargement, en erreur et vide. Un seul statut évite les
+// combinaisons incohérentes que plusieurs booléens indépendants pourraient autoriser.
 type PortfolioSearchState =
   | { status: 'loading'; portfolios: readonly Portfolio[] }
   | { status: 'success'; portfolios: readonly Portfolio[] }
@@ -77,9 +80,9 @@ export class PortfolioList {
     ),
   );
 
-  // toSignal() relie le flux RxJS au modèle de rendu Angular : le template lit un
-  // instantané réactif avec searchState(), tandis que debounce et cancellation restent
-  // gérés par RxJS. L'état initial évite une valeur absente avant la première émission.
+  // toSignal() relie le flux RxJS au modèle de rendu Angular : le template lit l'état
+  // courant avec searchState(), puis @if choisit une seule présentation selon status.
+  // RxJS garde la responsabilité du flux et de son annulation; le Signal expose son état.
   protected readonly searchState = toSignal(this.searchState$, {
     initialValue: {
       status: 'loading' as const,

@@ -15,22 +15,17 @@
   </div>
 
   @let state = searchState();
-  @switch (state.status) {
-    @case ('loading') {
-      <p role="status">Recherche des portfolios...</p>
-    }
-    @case ('error') {
-      <p role="alert">{{ state.message }}</p>
-    }
-    @case ('empty') {
-      <p role="status">Aucun portfolio ne correspond à cette recherche.</p>
-    }
-    @case ('success') {
-      <section class="portfolio-grid" aria-label="Liste des portfolios">
-        @for (portfolio of state.portfolios; track portfolio.id) {
-          <app-portfolio-card [portfolio]="portfolio" (viewDetails)="onViewDetails($event)" />
-        }
-      </section>
-    }
+  @if (state.status === 'loading') {
+    <p role="status">Recherche des portfolios...</p>
+  } @else if (state.status === 'error') {
+    <p role="alert">{{ state.message }}</p>
+  } @else if (state.status === 'empty') {
+    <p role="status">Aucun portfolio ne correspond à cette recherche.</p>
+  } @else if (state.status === 'success') {
+    <section class="portfolio-grid" aria-label="Liste des portfolios">
+      @for (portfolio of state.portfolios; track portfolio.id) {
+        <app-portfolio-card [portfolio]="portfolio" (viewDetails)="onViewDetails($event)" />
+      }
+    </section>
   }
 </section>
