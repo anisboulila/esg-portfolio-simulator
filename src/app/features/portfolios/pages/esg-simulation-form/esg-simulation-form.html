@@ -1,0 +1,117 @@
+<section class="simulation-form-page">
+  <header>
+    <h1>Simulation ESG</h1>
+    <p>Renseignez les indicateurs du portfolio {{ portfolioId }}.</p>
+  </header>
+
+  <form [formGroup]="simulationForm" (ngSubmit)="onSubmit()" novalidate>
+    <div class="form-field">
+      <label for="portfolioId">Identifiant du portfolio</label>
+      <input
+        id="portfolioId"
+        type="text"
+        formControlName="portfolioId"
+        readonly
+        [attr.aria-invalid]="showError(simulationForm.controls.portfolioId)"
+        [attr.aria-describedby]="showError(simulationForm.controls.portfolioId) ? 'portfolioId-error' : null"
+      />
+      @if (showError(simulationForm.controls.portfolioId)) {
+        <p id="portfolioId-error" class="field-error" role="alert">
+          {{ errorMessage(simulationForm.controls.portfolioId) }}
+        </p>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="carbonEmission">Émissions de carbone</label>
+      <input
+        id="carbonEmission"
+        type="number"
+        step="any"
+        min="0"
+        formControlName="carbonEmission"
+        [attr.aria-invalid]="showError(simulationForm.controls.carbonEmission)"
+        [attr.aria-describedby]="showError(simulationForm.controls.carbonEmission) ? 'carbonEmission-error' : null"
+      />
+      @if (showError(simulationForm.controls.carbonEmission)) {
+        <p id="carbonEmission-error" class="field-error" role="alert">
+          {{ errorMessage(simulationForm.controls.carbonEmission) }}
+        </p>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="greenInvestmentPercentage">Investissement vert (%)</label>
+      <input
+        id="greenInvestmentPercentage"
+        type="number"
+        step="any"
+        min="0"
+        max="100"
+        formControlName="greenInvestmentPercentage"
+        [attr.aria-invalid]="showError(simulationForm.controls.greenInvestmentPercentage)"
+        [attr.aria-describedby]="showError(simulationForm.controls.greenInvestmentPercentage) ? 'greenInvestmentPercentage-error' : null"
+      />
+      @if (showError(simulationForm.controls.greenInvestmentPercentage)) {
+        <p id="greenInvestmentPercentage-error" class="field-error" role="alert">
+          {{ errorMessage(simulationForm.controls.greenInvestmentPercentage) }}
+        </p>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="socialScore">Score social</label>
+      <input
+        id="socialScore"
+        type="number"
+        step="any"
+        min="0"
+        max="100"
+        formControlName="socialScore"
+        [attr.aria-invalid]="showError(simulationForm.controls.socialScore)"
+        [attr.aria-describedby]="showError(simulationForm.controls.socialScore) ? 'socialScore-error' : null"
+      />
+      @if (showError(simulationForm.controls.socialScore)) {
+        <p id="socialScore-error" class="field-error" role="alert">
+          {{ errorMessage(simulationForm.controls.socialScore) }}
+        </p>
+      }
+    </div>
+
+    <div class="form-field">
+      <label for="governanceScore">Score de gouvernance</label>
+      <input
+        id="governanceScore"
+        type="number"
+        step="any"
+        min="0"
+        max="100"
+        formControlName="governanceScore"
+        [attr.aria-invalid]="showError(simulationForm.controls.governanceScore)"
+        [attr.aria-describedby]="showError(simulationForm.controls.governanceScore) ? 'governanceScore-error' : null"
+      />
+      @if (showError(simulationForm.controls.governanceScore)) {
+        <p id="governanceScore-error" class="field-error" role="alert">
+          {{ errorMessage(simulationForm.controls.governanceScore) }}
+        </p>
+      }
+    </div>
+
+    <button type="submit">Préparer la simulation</button>
+  </form>
+
+  @if (preparedRequest; as request) {
+    <section class="prepared-request" aria-live="polite">
+      <h2>Données de simulation préparées</h2>
+      <dl>
+        <div><dt>Portfolio</dt><dd>{{ request.portfolioId }}</dd></div>
+        <div><dt>Émissions de carbone</dt><dd>{{ request.carbonEmission }}</dd></div>
+        <div><dt>Investissement vert (%)</dt><dd>{{ request.greenInvestmentPercentage }}</dd></div>
+        <div><dt>Score social</dt><dd>{{ request.socialScore }}</dd></div>
+        <div><dt>Score de gouvernance</dt><dd>{{ request.governanceScore }}</dd></div>
+      </dl>
+    </section>
+  }
+
+  <a [routerLink]="['/portfolios', portfolioId]">Retour au portfolio</a>
+</section>

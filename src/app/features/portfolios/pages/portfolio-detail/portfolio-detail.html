@@ -19,6 +19,7 @@
         <dd>{{ portfolio.currentValue }}</dd>
       </div>
     </dl>
+    <a [routerLink]="['/portfolios', portfolio.id, 'simulate']">Démarrer une simulation ESG</a>
   } @else {
     <h1>Portfolio introuvable</h1>
     <p role="status">Le portfolio demandé n'existe pas.</p>
