@@ -4,8 +4,18 @@
     <p>Liste des portefeuilles disponibles.</p>
   </header>
 
+  <div class="portfolio-search">
+    <label for="portfolio-search">Rechercher un portfolio par nom</label>
+    <input
+      id="portfolio-search"
+      type="search"
+      [value]="searchTerm()"
+      (input)="onSearchInput($event)"
+    />
+  </div>
+
   <section class="portfolio-grid" aria-label="Liste des portfolios">
-    @for (portfolio of portfolios; track portfolio.id) {
+    @for (portfolio of filteredPortfolios(); track portfolio.id) {
       <app-portfolio-card [portfolio]="portfolio" (viewDetails)="onViewDetails($event)" />
        
     }
