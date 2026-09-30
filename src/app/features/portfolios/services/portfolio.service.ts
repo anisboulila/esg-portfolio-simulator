@@ -5,10 +5,12 @@ import { HttpTransportError } from '../../../core/errors/http-transport-error';
 import { PortfolioApiService } from '../api/portfolio-api.service';
 import { Portfolio } from '../models/portfolio';
 
-// @Service marks this class for Angular DI and provides the stateless service at root.
-// Components can share one data-access contract without owning or copying the fixtures.
+// @Service() marque cette classe comme service et la rend automatiquement disponible
+// au système DI Angular, conformément au décorateur de la version utilisée par le projet.
 @Service()
 export class PortfolioService {
+  // inject() demande PortfolioApiService à l'injecteur Angular; le service ne construit
+  // pas lui-même sa dépendance. La chaîne continue vers HttpClient et API_BASE_URL.
   private readonly portfolioApi = inject(PortfolioApiService);
 
   // Le service de feature fournit un accès métier stable aux pages; l'API service

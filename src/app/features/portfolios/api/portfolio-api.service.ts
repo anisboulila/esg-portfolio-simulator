@@ -4,10 +4,11 @@ import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
 import { Portfolio } from '../models/portfolio';
 
-// Cette couche traduit les opérations Portfolio en requêtes HTTP typées.
-// Elle ne possède ni fixtures ni présentation : le service de feature coordonne l'accès.
+// @Service() rend cet adaptateur HTTP disponible au système DI Angular.
 @Service()
 export class PortfolioApiService {
+  // Angular résout HttpClient depuis sa configuration HTTP globale et API_BASE_URL
+  // depuis son provider. Cet adaptateur ne crée donc ni le client ni sa configuration.
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 

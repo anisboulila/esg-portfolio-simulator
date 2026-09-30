@@ -35,6 +35,7 @@ describe('Portfolio routing', () => {
       imports: [App],
       providers: [
         provideRouter(routes),
+        // Le provider useValue isole les tests de routing du serveur HTTP Portfolio.
         {
           provide: PortfolioService,
           useValue: {

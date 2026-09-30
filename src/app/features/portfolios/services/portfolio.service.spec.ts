@@ -35,6 +35,8 @@ describe('PortfolioService', () => {
     TestBed.configureTestingModule({
       providers: [
         PortfolioService,
+        // useValue fournit un faux adaptateur à TestBed pour isoler le service de feature
+        // du transport HTTP pendant ce test.
         {
           provide: PortfolioApiService,
           useValue: {

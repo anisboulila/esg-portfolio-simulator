@@ -14,6 +14,7 @@ describe('Dashboard', () => {
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
+        // useValue remplace PortfolioService dans l'injecteur de test par un faux accès local.
         {
           provide: PortfolioService,
           useValue: { getPortfolios: () => of(portfolioFixtures) },

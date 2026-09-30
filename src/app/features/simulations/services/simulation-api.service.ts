@@ -9,10 +9,11 @@ import { SimulationResult } from '../models/simulation-result';
 export class SimulationNotFoundError extends Error {}
 export class SimulationApiError extends Error {}
 
-// Le service centralise l'accès à l'API : le formulaire ne connaît ni HttpClient,
-// ni URL, ni détails de transport. Angular fournit HttpClient grâce à app.config.ts.
+// @Service() rend cet API service disponible au système DI Angular.
 @Service()
 export class SimulationApiService {
+  // Angular résout HttpClient et API_BASE_URL depuis les providers configurés;
+  // l'API service consomme ces dépendances sans fabriquer lui-même leur instance.
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 

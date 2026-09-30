@@ -40,6 +40,7 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 | Dependency Injection | Angular résout les services et tokens via ses providers. | `app.config.ts`, services |
 | `inject()` | Demande une dépendance au conteneur Angular. | composants et services |
 | Services | Accès aux fixtures ou orchestration de l’API hors des composants. | `PortfolioService`, `SimulationApiService` |
+| DI TASK-020 | `@Service()`, `InjectionToken`, provider `useFactory`; `useValue` remplace des dépendances dans TestBed. | Services, `api.config.ts`, `app.config.ts`, specs |
 | Search state | `searchTerm` est la source de saisie; la liste filtrée est dérivée. | `portfolio-list.ts/html` |
 | Observable | Flux asynchrone retourné par RxJS/HttpClient. | recherche, détail, `SimulationApiService` |
 | `debounceTime` | Attend une pause de saisie avant le travail local simulé. | `portfolio-list.ts` |
@@ -74,6 +75,33 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 13. **Q : Pourquoi le composant n’appelle-t-il pas HttpClient ?** **R :** « SimulationApiService encapsule URL et POST/GET; la page orchestre l’interface. L’interceptor traite le transport commun et les services gardent les erreurs métier. »
 14. **Q : Le type `http.post<SimulationResult>()` valide-t-il la réponse reçue ?** **R :** « Non, le generic sécurise l’usage à la compilation seulement. Il ne vérifie pas la forme du JSON à l’exécution. »
 15. **Q : Pourquoi Angular ne calcule-t-il pas `globalScore` ?** **R :** « Le backend est la source de vérité ESG. Angular affiche directement la valeur reçue, ce qui évite une règle concurrente et des écarts d’arrondi. »
+
+### TASK-020 — DI avancée réellement utilisée
+
+Dans ce projet, `@Service()` marque les services comme automatiquement disponibles au système DI Angular; `inject()` demande leurs dépendances au contexte d’injection. La déclaration Angular installée expose aussi l’option `autoProvided: false`, mais le projet ne l’utilise pas et ne déclare pas de providers de service par scope.
+
+`API_BASE_URL` est un `InjectionToken<string>` parce qu’une URL est une valeur de configuration, pas une classe. Son provider `useFactory` choisit la valeur dev/prod dans `app.config.ts`, puis `PortfolioApiService` et `SimulationApiService` la reçoivent via `inject()`.
+
+Les tests utilisent `useValue` pour fournir une chaîne d’URL ou un faux service à TestBed. C’est un remplacement local au test, pas un provider de production. `useClass`, `useExisting`, les providers de route/composant et hierarchical DI ne sont pas utilisés; aucun besoin métier actuel ne justifie un scope plus étroit.
+
+Questions orales TASK-020 :
+
+1. **Q : Qu’est-ce que la Dependency Injection Angular ?** **R :** « C’est le mécanisme où un injecteur fournit des dépendances aux classes qui les demandent. Dans ce projet, il résout par exemple PortfolioService vers PortfolioApiService, puis HttpClient et API_BASE_URL. »
+2. **Q : Pourquoi utiliser `inject()` ?** **R :** « `inject()` demande une dépendance à l’injecteur dans un contexte Angular, au lieu de la construire dans la classe. PortfolioService reçoit ainsi son API service géré par Angular. »
+3. **Q : Pourquoi un `InjectionToken` pour `API_BASE_URL` ?** **R :** « Une URL est une valeur string, pas une classe à instancier. Le token donne un identifiant typé que `app.config.ts` relie à l’URL active. »
+4. **Q : Qu’est-ce qu’un provider ?** **R :** « Un provider indique à Angular comment fournir une dépendance identifiée par un token. Ici `app.config.ts` configure Router, HttpClient et API_BASE_URL au niveau application. »
+5. **Q : Pourquoi `useFactory` pour l’URL ?** **R :** « La fabrique choisit une valeur selon `isDevMode()`. Cela garde le choix dev/prod dans la configuration, plutôt que dans chaque service API. »
+6. **Q : Différence entre un service injectable et une valeur injectée ?** **R :** « Un service est une classe gérée par le système DI; une valeur injectée peut être une chaîne ou un objet associé à un token. Ici les services injectent à la fois HttpClient et API_BASE_URL. »
+7. **Q : Pourquoi ne pas mettre tous les providers au niveau des composants ?** **R :** « Un provider de composant crée une portée plus locale et peut produire une instance distincte par sous-arbre. Les services Portfolio et API sont partagés et sans état local à isoler, donc ils restent auto-fournis. »
+8. **Q : Qu’est-ce que hierarchical DI ?** **R :** « Angular cherche une dépendance dans une hiérarchie d’injecteurs, du plus proche vers les parents. Le projet n’a pas de provider de route/composant qui exploite cette hiérarchie. »
+9. **Q : Pourquoi `useClass` et `useExisting` ne sont-ils pas utilisés ?** **R :** « Nous n’avons ni implémentation interchangeable à sélectionner par classe ni alias de token à partager. `useValue` suffit aux remplacements simples des tests. »
+10. **Q : Quel est le chemin DI de Portfolio ?** **R :** « PortfolioList demande PortfolioService; celui-ci demande PortfolioApiService. L’API service demande ensuite HttpClient et API_BASE_URL, tous résolus par les providers Angular. »
+
+Relances pièges :
+
+- **Est-ce que `inject()` signifie que le service est singleton ?** → Non, `inject()` résout une dépendance; le provider et son scope déterminent l’instance. `@Service()` est auto-fourni selon l’API Angular utilisée ici.
+- **Pourquoi ne pas mettre l’URL dans le service ?** → Le token permet à la configuration d’injecter une valeur différente selon l’environnement, sans lier le service à une adresse locale.
+- **Pourquoi ajouter un provider au niveau composant ?** → Pour isoler une instance dans un sous-arbre lorsqu’un besoin réel existe; ce projet n’a pas cette exigence.
 
 ## 5. 10 relances pièges
 

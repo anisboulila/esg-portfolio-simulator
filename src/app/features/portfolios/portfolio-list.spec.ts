@@ -28,6 +28,7 @@ const portfolioFixtures = [
   },
 ];
 
+// Ce faux service est injecté via useValue pour garder ces tests de rendu indépendants du HTTP.
 const portfolioServiceStub = {
   getPortfolios: () => of(portfolioFixtures),
   getPortfolioById: (id: string) => of(portfolioFixtures.find(({ id: portfolioId }) => portfolioId === id)),

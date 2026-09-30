@@ -26,6 +26,7 @@ describe('PortfolioApiService', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        // useValue remplace le token d'URL par une valeur stable fournie à l'injecteur de test.
         { provide: API_BASE_URL, useValue: 'http://mock.test' },
       ],
     });

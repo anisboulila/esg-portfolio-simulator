@@ -19,6 +19,8 @@ describe('App', () => {
       imports: [App],
       providers: [
         provideRouter(routes),
+        // useValue fournit un faux PortfolioService à l'injecteur de test, sans remplacer
+        // le provider de production ni déclencher les vrais appels HTTP.
         {
           provide: PortfolioService,
           useValue: {

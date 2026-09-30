@@ -14,12 +14,16 @@ export const appConfig: ApplicationConfig = {
     // L'interceptor est enregistré au niveau racine pour voir toutes les requêtes
     // HttpClient des features, sans que celles-ci dépendent de l'infrastructure.
     provideHttpClient(withInterceptors([httpErrorNormalizationInterceptor])),
-    // Le mode Angular sélectionne la cible HTTP: le serveur Node local en développement,
-    // ou le backend Spring Boot pour une build de production.
+    // Un provider indique à l'injecteur comment fournir un token. useFactory construit
+    // API_BASE_URL depuis le mode d'exécution; cette décision d'infrastructure est
+    // globale, car les API services de plusieurs features consomment la même configuration.
     {
       provide: API_BASE_URL,
       useFactory: () =>
         isDevMode() ? 'http://127.0.0.1:3001' : 'http://localhost:8080',
     },
+    // Les services partagés n'ont pas de provider de route ou de composant : aucun état
+    // ne demande une instance isolée. Un provider local créerait une portée plus limitée,
+    // mais aucune feature actuelle ne justifie cette complexité.
   ]
 };
