@@ -1,13 +1,32 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { App } from './app';
 import { routes } from './app.routes';
+import { PortfolioService } from './features/portfolios/services/portfolio.service';
+
+const portfolioFixture = {
+  id: 'p1',
+  name: 'Portfolio Europe',
+  description: 'Europe',
+  assetCount: 24,
+  currentValue: 1250000,
+};
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes)],
+      providers: [
+        provideRouter(routes),
+        {
+          provide: PortfolioService,
+          useValue: {
+            getPortfolios: () => of([portfolioFixture]),
+            getPortfolioById: () => of(portfolioFixture),
+          },
+        },
+      ],
     })
       .compileComponents();
   });

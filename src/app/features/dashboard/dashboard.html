@@ -6,20 +6,27 @@
 
   <section class="summary" aria-label="Résumé des portefeuilles">
     <app-detail-section class="summary-card" title="Portefeuilles">
-      <dl class="summary-metrics">
-        <div>
-          <dt>Nombre de portefeuilles</dt>
-          <dd>{{ portfolioSummary().count }}</dd>
-        </div>
-        <div>
-          <dt>Valeur totale</dt>
-          <dd>{{ portfolioSummary().totalValue }} €</dd>
-        </div>
-      </dl>
+      @let state = portfolioSummary();
+      @if (state.status === 'loading') {
+        <p role="status">Chargement du résumé des portefeuilles...</p>
+      } @else if (state.status === 'error') {
+        <p role="alert">Le résumé des portfolios n'a pas pu être chargé.</p>
+      } @else {
+        <dl class="summary-metrics">
+          <div>
+            <dt>Nombre de portefeuilles</dt>
+            <dd>{{ state.portfolioCount }}</dd>
+          </div>
+          <div>
+            <dt>Valeur totale</dt>
+            <dd>{{ state.totalPortfolioValue }} €</dd>
+          </div>
+        </dl>
+      }
     </app-detail-section>
 
-    <app-detail-section class="summary-card" title="Score ESG moyen">
-      <p class="summary-score">{{ portfolioSummary().averageEsgScore }} / 100</p>
+    <app-detail-section class="summary-card" title="Score ESG moyen (exemple)">
+      <p class="summary-score">{{ averageEsgScore() }} / 100</p>
     </app-detail-section>
   </section>
 </section>

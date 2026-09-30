@@ -1,5 +1,17 @@
 <section class="portfolio-detail">
-  @if (portfolio(); as portfolio) {
+  @let state = portfolioState();
+
+  @if (state.status === 'loading') {
+    <h1>Portfolio</h1>
+    <p role="status">Chargement du portfolio...</p>
+  } @else if (state.status === 'not-found') {
+    <h1>Portfolio introuvable</h1>
+    <p role="status">Le portfolio demandé n'existe pas.</p>
+  } @else if (state.status === 'error') {
+    <h1>Portfolio indisponible</h1>
+    <p role="alert">Le portfolio n'a pas pu être chargé. Veuillez réessayer.</p>
+  } @else if (state.status === 'success') {
+    @let portfolio = state.portfolio;
     <header class="portfolio-detail-header">
       <h1>{{ portfolio.name }}</h1>
       <p>{{ portfolio.description }}</p>
@@ -20,9 +32,6 @@
       </div>
     </dl>
     <a [routerLink]="['/portfolios', portfolio.id, 'simulate']">Démarrer une simulation ESG</a>
-  } @else {
-    <h1>Portfolio introuvable</h1>
-    <p role="status">Le portfolio demandé n'existe pas.</p>
   }
 
   <a routerLink="/portfolios">Retour à la liste</a>

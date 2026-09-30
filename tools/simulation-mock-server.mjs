@@ -3,6 +3,29 @@ import { createServer } from 'node:http';
 const port = Number(process.env.SIMULATION_MOCK_PORT ?? 3001);
 const mockSimulationId = 'mock-simulation-001';
 const simulationResults = new Map();
+const portfolios = [
+  {
+    id: 'p1',
+    name: 'Portfolio Europe',
+    description: 'Diversified investments across European markets.',
+    assetCount: 24,
+    currentValue: 1250000,
+  },
+  {
+    id: 'p2',
+    name: 'Portfolio Green',
+    description: 'Investments focused on renewable energy and sustainability.',
+    assetCount: 18,
+    currentValue: 875000,
+  },
+  {
+    id: 'p3',
+    name: 'Portfolio Sustainable',
+    description: 'Long-term investments screened for ESG performance.',
+    assetCount: 31,
+    currentValue: 1630000,
+  },
+];
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
@@ -47,12 +70,37 @@ const server = createServer(async (request, response) => {
 
   const pathname = new URL(request.url ?? '/', 'http://localhost').pathname;
 
+  if (request.method === 'GET' && pathname === '/api/v1/portfolios') {
+    sendJson(response, 200, portfolios);
+    return;
+  }
+
+  const portfolioMatch = pathname.match(/^\/api\/v1\/portfolios\/([^/]+)$/);
+  if (request.method === 'GET' && portfolioMatch) {
+    const portfolio = portfolios.find(
+      ({ id }) => id === decodeURIComponent(portfolioMatch[1]),
+    );
+    if (!portfolio) {
+      sendJson(response, 404, { message: 'Portfolio introuvable.' });
+      return;
+    }
+
+    sendJson(response, 200, portfolio);
+    return;
+  }
+
   if (request.method === 'POST' && pathname === '/api/v1/esg/simulations') {
     let payload;
     try {
       payload = await readJson(request);
     } catch {
       sendJson(response, 400, { message: 'Corps JSON invalide.' });
+      return;
+    }
+
+    const portfolio = portfolios.find(({ id }) => id === payload.portfolioId);
+    if (!portfolio) {
+      sendJson(response, 404, { message: 'Portfolio introuvable.' });
       return;
     }
 
@@ -65,13 +113,7 @@ const server = createServer(async (request, response) => {
     // représentent une réponse backend d'exemple et sont conservés telle quelle au GET.
     const result = {
       id: mockSimulationId,
-      portfolio: {
-        id: payload.portfolioId,
-        name: 'Portfolio de démonstration',
-        description: 'Portfolio retourné par le serveur mock.',
-        assetCount: 3,
-        currentValue: 100000,
-      },
+      portfolio,
       environmentalScore: 72,
       socialScore: 81,
       governanceScore: 76,

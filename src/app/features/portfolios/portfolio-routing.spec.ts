@@ -1,13 +1,49 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
 import { App } from '../../app';
 import { routes } from '../../app.routes';
+import { PortfolioService } from './services/portfolio.service';
+
+const portfolioFixtures = [
+  {
+    id: 'p1',
+    name: 'Portfolio Europe',
+    description: 'Diversified investments across European markets.',
+    assetCount: 24,
+    currentValue: 1250000,
+  },
+  {
+    id: 'p2',
+    name: 'Portfolio Green',
+    description: 'Investments focused on renewable energy and sustainability.',
+    assetCount: 18,
+    currentValue: 875000,
+  },
+  {
+    id: 'p3',
+    name: 'Portfolio Sustainable',
+    description: 'Long-term investments screened for ESG performance.',
+    assetCount: 31,
+    currentValue: 1630000,
+  },
+];
 
 describe('Portfolio routing', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes)],
+      providers: [
+        provideRouter(routes),
+        {
+          provide: PortfolioService,
+          useValue: {
+            getPortfolios: () => of(portfolioFixtures),
+            getPortfolioById: (id: string) =>
+              of(portfolioFixtures.find((portfolio) => portfolio.id === id)),
+          },
+        },
+      ],
     }).compileComponents();
   });
 
@@ -19,6 +55,15 @@ describe('Portfolio routing', () => {
     await router.navigateByUrl(url);
     await fixture.whenStable();
     fixture.detectChanges();
+
+    if (url === '/portfolios') {
+      await vi.waitFor(() => {
+        fixture.detectChanges();
+        expect(
+          (fixture.nativeElement as HTMLElement).querySelector('app-portfolio-card button'),
+        ).toBeTruthy();
+      }, { timeout: 2000 });
+    }
 
     return { fixture, router };
   }
@@ -70,9 +115,9 @@ describe('Portfolio routing', () => {
     );
     expect(detail?.textContent).toContain('18');
     expect(detail?.textContent).toContain('875000');
-    expect(detail?.querySelector('a')?.getAttribute('routerLink')).toBe(
-      '/portfolios',
-    );
+    expect(
+      detail?.querySelector('a[routerLink="/portfolios"]')?.textContent,
+    ).toContain('Retour à la liste');
   });
 
   it('should show a not-found state for an unknown portfolio ID', async () => {
