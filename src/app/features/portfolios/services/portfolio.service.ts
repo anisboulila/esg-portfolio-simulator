@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, catchError, of, throwError } from 'rxjs';
+import { HttpTransportError } from '../../../core/errors/http-transport-error';
 import { PortfolioApiService } from '../api/portfolio-api.service';
 import { Portfolio } from '../models/portfolio';
 
@@ -16,12 +17,16 @@ export class PortfolioService {
     return this.portfolioApi.getPortfolios();
   }
 
-  // Un 404 signifie que cette ressource n'existe pas; les autres erreurs restent
-  // des erreurs techniques à convertir en état UI par la page qui connaît son contexte.
+  // L'interceptor a normalisé le statut HTTP; la feature décide qu'un 404 Portfolio
+  // signifie « absent ». Les autres erreurs remontent pour alimenter l'état de la page.
   getPortfolioById(id: string): Observable<Portfolio | undefined> {
     return this.portfolioApi.getPortfolioById(id).pipe(
       catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse && error.status === 404) {
+        const status =
+          error instanceof HttpTransportError || error instanceof HttpErrorResponse
+            ? error.status
+            : undefined;
+        if (status === 404) {
           return of(undefined);
         }
 

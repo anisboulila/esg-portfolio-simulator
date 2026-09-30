@@ -51,8 +51,9 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 | Validators | Validators intégrés `required`, `pattern`, `min`, `max`. | formulaire ESG |
 | HttpClient | POST/GET typés dans le service API, jamais dans les pages. | `simulation-api.service.ts` |
 | `provideHttpClient()` | Provider standalone racine rendant HttpClient injectable. | `app.config.ts` |
+| HTTP interceptor | `HttpInterceptorFn` normalise les erreurs de transport et conserve leur statut; aucun `clone()` car aucune requête n'est modifiée. | `core/http/http-error-normalization.interceptor.ts`, `app.config.ts` |
 | Contrats API typés | Request et Result guident l’usage TS; pas de validation runtime du JSON. | `features/simulations/models/` |
-| Gestion erreurs HTTP | 404 devient `SimulationNotFoundError`, autres erreurs `SimulationApiError`; textes UX dans les pages. | service API, formulaire, résultat |
+| Gestion erreurs HTTP | L'interceptor produit `HttpTransportError`; les services conservent le mapping métier du 404 et les pages affichent l'UX. | interceptor, services API, pages |
 | Vitest / TestBed | Tests composants et services emploient TestBed et fixtures. | `src/app/**/*.spec.ts` |
 | Tests composant/service/HTTP/routing | Composant, service Portfolio et routing sont couverts; tests HTTP absents. | 6 specs existantes; voir section Tests |
 
@@ -64,13 +65,13 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 4. **Q : Pourquoi Signals et RxJS coexistent-ils ?** **R :** « RxJS organise les événements, délais et annulations. Le Signal expose ensuite l’état courant que le template doit afficher. »
 5. **Q : Pourquoi `debounceTime` et `switchMap` dans la recherche ?** **R :** « Le debounce évite de lancer le travail à chaque caractère. `switchMap` désabonne l’ancien timer quand arrive le prochain terme stabilisé. »
 6. **Q : Comment fonctionnent Inputs et Outputs ?** **R :** « La carte reçoit un Portfolio par input requis; elle émet l’ID au clic. Le parent choisit la navigation, ce qui garde la carte réutilisable. »
-7. **Q : Pourquoi utiliser `ng-content` ?** **R :** « Le titre de DetailSection est une valeur simple passée par input. Son corps varie selon le parent, donc la projection est plus adaptée qu’un input de texte. »
+7. **Q : Qu'est-ce qu'un HTTP interceptor Angular et à quoi sert-il ?** **R :** « `HttpInterceptorFn` est un middleware de la chaîne HttpClient qui peut traiter les requêtes et réponses de façon transverse. Ici il normalise les erreurs HTTP en conservant leur statut; les services gardent l'interprétation métier. »
 8. **Q : Pourquoi un PortfolioService ?** **R :** « Il centralise l’accès aux fixtures utilisées par liste et détail. Les composants restent centrés sur rendu et interactions. »
 9. **Q : Que fait `inject()` ?** **R :** « Il demande une dépendance au conteneur DI depuis un contexte Angular. Ici il fournit Router, services et tokens sans constructeur. »
 10. **Q : Pourquoi lazy-load les features ?** **R :** « La racine charge les routes de feature à la navigation avec `loadChildren`. Cela sépare les features et évite de charger leur code dans le premier chunk de routes. »
 11. **Q : Pourquoi Reactive Forms ?** **R :** « C’est le choix pédagogique des SDD pour apprendre FormGroup, FormControl, validators et état de validation. Le projet ne remplace pas ce choix par Signal Forms. »
 12. **Q : Comment distinguer `touched`, `dirty` et `invalid` ?** **R :** « `touched` indique une interaction suivie d’une sortie du champ; `dirty`, une valeur modifiée; `invalid`, un échec de règle. Le template attend interaction ou tentative d’envoi. »
-13. **Q : Pourquoi le composant n’appelle-t-il pas HttpClient ?** **R :** « SimulationApiService encapsule URL, POST/GET et traduction d’erreurs. La page construit le Request et orchestre l’état de l’interface. »
+13. **Q : Pourquoi le composant n’appelle-t-il pas HttpClient ?** **R :** « SimulationApiService encapsule URL et POST/GET; la page orchestre l’interface. L’interceptor traite le transport commun et les services gardent les erreurs métier. »
 14. **Q : Le type `http.post<SimulationResult>()` valide-t-il la réponse reçue ?** **R :** « Non, le generic sécurise l’usage à la compilation seulement. Il ne vérifie pas la forme du JSON à l’exécution. »
 15. **Q : Pourquoi Angular ne calcule-t-il pas `globalScore` ?** **R :** « Le backend est la source de vérité ESG. Angular affiche directement la valeur reçue, ce qui évite une règle concurrente et des écarts d’arrondi. »
 
@@ -83,13 +84,12 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 5. **Le generic TypeScript valide-t-il un JSON mal formé ?** → Non; une validation runtime n’est pas présente dans cette implémentation.
 6. **Le mock calcule-t-il les scores ?** → Non; il renvoie des valeurs de fixture statiques et ne représente pas la règle métier.
 7. **Où doit vivre un message d’erreur métier ?** → Dans la feature qui connaît le contexte; le service transforme l’erreur transport en type applicatif.
-8. **Pourquoi pas d’interceptor ?** → Le mapping actuel appartient à un seul service API; aucun besoin transverse partagé n’a été démontré.
+8. **Pourquoi l’interceptor ne crée-t-il pas `SimulationNotFoundError` ?** → Ce type exprime une règle de la feature Simulation; l’interceptor ne conserve que le statut transport et le service fait le mapping.
 9. **Route parameter ou query parameter ?** → `:id` identifie la ressource et appartient au chemin; un query parameter est plutôt un filtre ou une option de vue.
 10. **Que manque-t-il avant production ?** → Tests HTTP/form/résultat, validation runtime éventuelle des contrats, configuration d’environnement robuste et vérification accessibilité automatisée.
 
 ## 6. Ce que je n’ai PAS utilisé
 
-- HTTP interceptor — aucun besoin transversal partagé démontré jusqu’à TASK-018.
 - Route guards/resolvers — le projet n’en déclare pas.
 - NgRx/store global — l’état reste local.
 - `Subject` / `BehaviorSubject` — absents; les Observables HTTP et interop sont utilisés.

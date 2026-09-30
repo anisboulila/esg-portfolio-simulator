@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
 import { Observable, catchError, throwError } from 'rxjs';
 import { API_BASE_URL } from '../../../core/config/api.config';
+import { HttpTransportError } from '../../../core/errors/http-transport-error';
 import { SimulationRequest } from '../models/simulation-request';
 import { SimulationResult } from '../models/simulation-result';
 
@@ -36,10 +37,14 @@ export class SimulationApiService {
     return `${this.baseUrl.replace(/\/+$/, '')}${path}`;
   }
 
-  // La couche API convertit le statut HTTP connu en erreur applicative typée.
-  // Les pages peuvent distinguer 404 sans exposer la réponse brute du serveur.
+  // L'interceptor préserve le statut dans une erreur transport commune; cette API
+  // le traduit en erreur de simulation afin que la page garde un état not-found dédié.
   private mapError(error: unknown): Observable<never> {
-    if (error instanceof HttpErrorResponse && error.status === 404) {
+    const status =
+      error instanceof HttpTransportError || error instanceof HttpErrorResponse
+        ? error.status
+        : undefined;
+    if (status === 404) {
       return throwError(() => new SimulationNotFoundError());
     }
 
