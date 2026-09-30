@@ -23,6 +23,7 @@
     <p role="status">Aucun portfolio ne correspond à cette recherche.</p>
   } @else if (state.status === 'success') {
     <section class="portfolio-grid" aria-label="Liste des portfolios">
+      <!-- @for et les bindings fournissent les données et événements; aucune query enfant n'est requise. -->
       @for (portfolio of state.portfolios; track portfolio.id) {
         <app-portfolio-card [portfolio]="portfolio" (viewDetails)="onViewDetails($event)" />
       }

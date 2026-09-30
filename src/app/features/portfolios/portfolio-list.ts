@@ -144,6 +144,8 @@ export class PortfolioList {
       : portfolios;
   }
 
+  // Le binding de l'output transmet seulement l'ID à ce parent. PortfolioList peut
+  // naviguer sans conserver ni manipuler directement l'instance PortfolioCard.
   onViewDetails(portfolioId: string): void {
     void this.router.navigate(['/portfolios', portfolioId]);
   }

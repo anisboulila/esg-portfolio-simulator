@@ -103,6 +103,29 @@ Relances pièges :
 - **Pourquoi ne pas mettre l’URL dans le service ?** → Le token permet à la configuration d’injecter une valeur différente selon l’environnement, sans lier le service à une adresse locale.
 - **Pourquoi ajouter un provider au niveau composant ?** → Pour isoler une instance dans un sous-arbre lorsqu’un besoin réel existe; ce projet n’a pas cette exigence.
 
+### TASK-021 — View and Content Queries
+
+**Réellement utilisé :** `input()` / `input.required()`, `output()`, bindings de template, `@for` et `<ng-content />`. Aucune view query ou content query Angular n’est actuellement utilisée en production. Les `querySelector()` / `nativeElement` éventuellement présents dans les specs inspectent le DOM de test; ce ne sont pas des queries Angular.
+
+**Étudié mais non utilisé :** `viewChild()` / `viewChildren()` donnent accès aux éléments ou composants présents dans la vue du composant. `contentChild()` / `contentChildren()` donnent accès au contenu fourni par le parent via `ng-content`. Les variantes signal-based exposent le résultat comme un Signal et suivent les changements de présence; une query optionnelle peut être absente.
+
+**Pourquoi aucune query n’a été ajoutée :** dans `PortfolioList → PortfolioCard`, `input.required<Portfolio>()` transmet la donnée, `output<string>()` transmet l’ID et le binding déclare l’interaction. Le parent n’a pas besoin d’appeler directement une méthode ou manipuler l’enfant. Dans `DetailSection`, un input fournit le titre et `<ng-content />` projette le corps; le composant ne l’inspecte ni ne le coordonne.
+
+**Lifecycle :** les anciennes queries `@ViewChild` / `@ContentChild` sont généralement consommées après l’initialisation de la vue ou du contenu. Les queries signal-based exposent une valeur réactive qui suit l’apparition ou la disparition des éléments, sans devoir synchroniser manuellement une propriété depuis un hook. Il faut toujours tenir compte d’une valeur optionnelle absente.
+
+> Ajouter une query uniquement pour démontrer l’API serait artificiel et contraire à NFR-005.
+
+Questions orales TASK-021 :
+
+1. **Q : Qu’est-ce qu’une view query ?** **R :** « C’est un moyen pour un composant d’obtenir une référence à un élément ou composant de sa propre vue. Dans ce projet, aucun besoin d’accès impératif de ce type n’existe. »
+2. **Q : Quelle différence entre `viewChild()` et `contentChild()` ?** **R :** « `viewChild()` cible la vue déclarée par le composant; `contentChild()` cible un enfant projeté par son parent via `ng-content`. `DetailSection` projette du contenu mais n’a pas besoin de le lire. »
+3. **Q : Pourquoi `ng-content` ne nécessite-t-il pas automatiquement `contentChild()` ?** **R :** « La projection suffit à afficher le contenu fourni par le parent. Une query ne devient utile que si le conteneur doit réellement détecter ou coordonner ce contenu. »
+4. **Q : Pourquoi pas `viewChild()` dans `PortfolioList` ?** **R :** « La liste fournit les données par input et reçoit l’ID par output. Elle navigue à partir de cet événement sans accéder à l’instance de la carte. »
+5. **Q : Différence entre query Angular et `querySelector()` ?** **R :** « Une query Angular cible une vue ou du contenu projeté et suit son cycle de rendu. `querySelector()` est une API DOM utilisée ici dans des specs, pas une query de composant en production. »
+6. **Q : Que change une signal-based query ?** **R :** « Son résultat est lu comme un Signal et se met à jour quand la présence de l’élément ciblé évolue. Aucune signal query n’est utilisée dans ce projet. »
+7. **Q : Quand une query devient-elle pertinente ?** **R :** « Quand un composant doit réellement accéder à un enfant ou contenu projeté pour une interaction impossible à exprimer proprement avec input, output ou binding. Il faut pouvoir nommer ce besoin concret. »
+8. **Q : Pourquoi ne pas en ajouter une pour démontrer Angular ?** **R :** « Une API sans besoin réel ajoute du couplage et du code à maintenir. Ici les bindings et la projection répondent déjà aux interactions, conformément à NFR-005. »
+
 ## 5. 10 relances pièges
 
 1. **Pourquoi ne pas utiliser RxJS partout ?** → RxJS décrit les flux asynchrones; Signals exposent simplement un état courant au template.
@@ -124,6 +147,7 @@ Relances pièges :
 - `AsyncPipe` — les flux sont consommés avec `toSignal()` ou `subscribe()`.
 - Directives/pipes personnalisés — absents; le contrôle de flux Angular intégré est utilisé.
 - SSR/hydration, zoneless et `@defer` — non implémentés.
+- Queries Angular (`viewChild`, `viewChildren`, `contentChild`, `contentChildren`) — étudiées conceptuellement, absentes de la production.
 
 ## 7. Réponse finale de 60 secondes
 
