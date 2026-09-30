@@ -7,6 +7,7 @@ import {
 import { SimulationResult } from '../../models/simulation-result';
 import { EsgScorePresentationDirective } from '../../../../shared/directives/esg-score-presentation.directive';
 import { EsgScorePipe } from '../../../../shared/pipes/esg-score.pipe';
+import { SimulationContext } from './simulation-context';
 
 type SimulationResultState =
   | { status: 'loading' }
@@ -16,7 +17,7 @@ type SimulationResultState =
 
 @Component({
   selector: 'app-simulation-result',
-  imports: [RouterLink, EsgScorePipe, EsgScorePresentationDirective],
+  imports: [RouterLink, EsgScorePipe, EsgScorePresentationDirective, SimulationContext],
   templateUrl: './simulation-result.html',
   styleUrl: './simulation-result.css',
 })

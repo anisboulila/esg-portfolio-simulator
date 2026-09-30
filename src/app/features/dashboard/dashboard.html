@@ -6,7 +6,7 @@
 
   <section class="summary" aria-label="Résumé des portefeuilles">
     <app-detail-section class="summary-card" title="Portefeuilles">
-      @let state = portfolioSummary();
+      @let state = portfolioState();
       @if (state.status === 'loading') {
         <p role="status">Chargement du résumé des portefeuilles...</p>
       } @else if (state.status === 'error') {

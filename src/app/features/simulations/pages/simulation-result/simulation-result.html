@@ -48,6 +48,23 @@
         <dd>{{ state.result.greenInvestmentPercentage }}</dd>
       </div>
     </dl>
+
+    <!--
+      @defer diffère seulement ces métadonnées secondaires, après l'affichage du score
+      officiel et des indicateurs. Le composant est une dépendance lazy du bloc, pas
+      une dépendance de la navigation : le lazy loading des routes découpe les features,
+      tandis que @defer découpe du contenu à l'intérieur d'une page déjà chargée.
+      Garder le contenu principal hors du bloc évite de retarder le résultat attendu.
+    -->
+    @defer (on viewport) {
+      <app-simulation-context [result]="state.result" />
+    } @placeholder {
+      <p role="status">Les détails complémentaires apparaîtront à l'écran au besoin.</p>
+    } @loading (after 100ms) {
+      <p role="status">Chargement des détails complémentaires...</p>
+    } @error {
+      <p role="alert">Les détails complémentaires sont momentanément indisponibles.</p>
+    }
   }
 
   <a routerLink="/portfolios">Retour aux portfolios</a>

@@ -29,7 +29,7 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 | Components / templates | Les pages composent le shell, les sections et cartes. | `src/app/features/**`, `app.html` |
 | Signals | État courant lisible par le template. | Dashboard, PortfolioList, formulaire, résultat |
 | `signal()` | État modifiable local, par exemple recherche ou état de soumission. | `dashboard.ts`, `portfolio-list.ts`, formulaire, résultat |
-| `computed()` | Valeur dérivée recalculée depuis les Signals lus. | `dashboard.ts`, `portfolio-list.ts`, détail |
+| `computed()` | Valeur dérivée recalculée depuis les Signals lus. | `portfolio-list.ts` |
 | `@if` / `@for` | Contrôle de flux et rendu des listes/états. | templates Dashboard, portfolios, résultat |
 | Inputs | Donnée parent → enfant avec signal input requis. | `portfolio-card.ts` |
 | Outputs | Événement enfant → parent portant l’ID. | carte et `portfolio-list.html` |
@@ -37,6 +37,8 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 | Routing | `routerLink`, `Router.navigate`, `router-outlet`. | `app.routes.ts`, routes features, shell |
 | Route parameters | Lecture d’ID Portfolio/Simulation depuis `ActivatedRoute`. | pages détail, formulaire, résultat |
 | Lazy loading | Les arbres de routes sont importés à la navigation. | `app.routes.ts`, `*.routes.ts` |
+| `@defer` | Diffère un composant secondaire jusqu'à l'entrée de son emplacement dans le viewport. | `simulation-result.html` |
+| Cache HTTP partagé | Le service garde une réponse en mémoire et partage aussi le GET en cours. | `PortfolioService` |
 | Dependency Injection | Angular résout les services et tokens via ses providers. | `app.config.ts`, services |
 | `inject()` | Demande une dépendance au conteneur Angular. | composants et services |
 | Services | Accès aux fixtures ou orchestration de l’API hors des composants. | `PortfolioService`, `SimulationApiService` |
@@ -148,6 +150,85 @@ Questions orales TASK-022 :
 7. **Q : Pourquoi aucun seuil ESG n’est-il dans la Directive ?** **R :** « Les seuils sont une règle backend. Le template lui fournit seulement le rôle visuel `official` ou `indicator`, que la directive convertit en classes. »
 8. **Q : Quand un binding classique suffirait-il ?** **R :** « Pour un seul élément ou une classe isolée, un binding `[class]` est souvent plus simple. La directive devient utile si plusieurs vues partagent réellement ce comportement. »
 
+### TASK-023 — Performance
+
+#### Change Detection
+
+Angular vérifie les vues quand il reçoit une notification de changement; les Signals fournissent un état réactif et permettent à Angular de suivre les valeurs lues par les templates. `computed()` décrit une valeur dérivée, mise à jour lorsque ses dépendances changent, sans stocker une copie manuelle à synchroniser. Éviter les calculs coûteux dans les templates prévient de refaire du travail à chaque vérification; les transformations plus lourdes doivent être mesurées puis placées dans une dérivation adaptée.
+
+Dans ce projet, la recherche est un `signal()` et `filteredPortfolios` est un `computed()` dans `portfolio-list.ts`; les états HTTP sont présentés par Signals. Le Dashboard agrège les portfolios dans le flux HTTP, pas dans le template. TASK-023 retire son `computed()` identité, qui ne dérivait rien.
+
+#### `@for` + `track`
+
+Sans clé stable, Angular peut avoir du mal à associer les éléments d'une nouvelle collection aux vues existantes et recréer plus de DOM que nécessaire. `track` fournit cette identité : dans `portfolio-list.html`, `track portfolio.id` permet de conserver la vue de chaque portfolio par son ID lorsque le filtre change. Cette liste est petite, donc c'est surtout une pratique correcte et scalable, pas une optimisation mesurée comme nécessaire aujourd'hui.
+
+#### Lazy Loading
+
+`loadChildren()` importe dynamiquement un arbre de routes quand l'utilisateur visite la feature; le code de ces routes et composants peut alors être émis dans des chunks chargés à la demande. La racine de ce projet différencie Dashboard, Portfolios et Simulations dans `app.routes.ts`, tandis que chaque feature possède ses routes. Le Dashboard est chargé lors de l'ouverture initiale de `/`; les autres features n'ont pas besoin d'être chargées avant leur navigation.
+
+#### `@defer`
+
+`@defer` reporte le chargement/rendu de dépendances d'un bloc à un déclencheur dans une page; il ne remplace pas le lazy loading de route, qui retarde une feature entière jusqu'à sa navigation. Le résultat officiel et ses indicateurs restent affichés immédiatement; le composant secondaire `SimulationContext` dans `simulation-result.html` est différé avec `on viewport` et affiche uniquement des données déjà présentes dans la réponse backend.
+
+- `@placeholder` affiche le texte tant que le déclencheur n'a pas chargé le bloc.
+- `@loading` présente un état pendant le chargement de ses dépendances; avec un petit composant local, cet état peut être trop bref pour être visible.
+- `@error` permet une présentation de repli si le chargement différé échoue.
+
+Nous ne différons pas la page entière : cela rendrait le résultat principal inutilement dépendant d'un contenu secondaire. N'utilisez `@defer` que lorsqu'une dépendance est réellement optionnelle ou coûteuse; un bloc minuscule au-dessus de la ligne de flottaison pourrait ajouter du délai sans bénéfice. L'exemple est volontairement léger pour apprendre et non une optimisation mesurée.
+
+#### Zoneless
+
+Zone.js interceptait notamment des tâches asynchrones pour aider Angular à détecter quand vérifier les vues. Le mode Zoneless s'appuie sur les notifications Angular explicites, notamment Signals et les mécanismes de rendu du framework, sans Zone.js pour déclencher globalement ces vérifications.
+
+Le projet utilise Angular 22.2, ne déclare pas `zone.js` comme dépendance directe et ne configure pas `provideZoneChangeDetection()`. Le comportement Zoneless est le défaut moderne pertinent ici; aucune migration ni ajout de `provideZonelessChangeDetection()` n'est nécessaire. En entretien, distinguer le mécanisme de détection (Zone.js) de la notification d'état (Signal), et préciser que Zoneless n'améliore pas automatiquement tous les algorithmes ni le coût d'un calcul.
+
+#### Cache HTTP
+
+Le cache est dans `PortfolioService`, car Dashboard et PortfolioList consomment la même donnée; le placer dans les composants dupliquerait la politique et pourrait produire des versions différentes. Le Signal privé du service contient la réponse mise en cache (`null` signifie non chargée/invalide, une liste vide reste une réponse valide); les Signals d'état des pages restent de l'état UI. Le cache n'est pas la source de vérité : le backend l'est toujours.
+
+`getPortfolios()` fait le premier GET puis renvoie la réponse en mémoire. `refreshPortfolios()` invalide et force un nouvel appel, et `invalidatePortfolios()` permet de vider le cache, par exemple après une future mutation. Le cache n'a pas de TTL automatique : il faut appeler explicitement refresh/invalidation quand le contexte demande des données fraîches. Sans invalidation, une réponse pourrait rester obsolète pendant la vie de l'application.
+
+Une requête en cours n'est pas encore une donnée en cache. `shareReplay` permet à plusieurs consommateurs arrivant simultanément de s'abonner au même GET; après succès, la réponse devient le cache des lectures suivantes. Une erreur ne remplit pas le cache et une nouvelle lecture peut réessayer. Un compteur de génération empêche une ancienne réponse, terminée après un refresh, d'écraser la donnée plus récente.
+
+#### RxJS et recherche
+
+`debounceTime(300)` attend que la saisie se stabilise avant d'engager la recherche locale; cela évite de filtrer à chaque frappe. `switchMap()` remplace le timer de présentation en cours lorsque le terme débouncé change; dans le code actuel, il annule ce timer, pas un appel HTTP de recherche, car le filtre est local. `toSignal()` adapte les flux de données et d'état au modèle que le template lit de manière réactive.
+
+#### Ce que j'ai réellement utilisé
+
+**Utilisé dans le projet**
+
+- `signal()`, `computed()` et `toSignal()` pour état local et valeurs dérivées.
+- `debounceTime()` et `switchMap()` pour la saisie et le flux de recherche.
+- `@for` + `track portfolio.id` pour le rendu stable de la liste.
+- Lazy loading avec `loadChildren()` pour les routes de features.
+- `@defer` et le cache partagé de portfolios ajoutés pour apprendre dans TASK-023; leur présence ne signifie pas qu'un gain a été mesuré.
+
+**Connu / étudié mais pas nécessairement utilisé comme optimisation**
+
+- Migration d'une application Zone.js vers Zoneless : non nécessaire ici, le projet Angular 22.2 est déjà concerné par le comportement Zoneless par défaut.
+- NgRx et stores globaux : non utilisés et disproportionnés pour les états actuels.
+- Stratégies de cache complexes (TTL distribué, invalidation multi-instance, persistance) : non utilisées.
+- Profiling avancé : non effectué; mesurer les bundles, performances de rendu et traces avant de justifier une optimisation plus poussée.
+
+#### Questions d'entretien TASK-023
+
+1. **Pourquoi utiliser `track` avec `@for` ?** « `track` donne à Angular une identité stable pour associer les données aux vues DOM. Ici `portfolio.id` permet de réutiliser la carte du même portfolio quand la recherche filtre la liste. »
+2. **Lazy loading vs `@defer` ?** « Le lazy loading retarde une feature ou un arbre de routes jusqu'à la navigation; `@defer` retarde une partie optionnelle du template d'une page. Nous utilisons les deux niveaux : routes via `loadChildren()` et contexte du résultat via `@defer`. »
+3. **Pourquoi ne pas utiliser `@defer` partout ?** « Il ajoute un délai et des états de chargement; il n'est utile que si le contenu peut vraiment attendre ou si son code coûte assez cher. Le score officiel de notre page reste immédiatement visible. »
+4. **Qu'est-ce que Zoneless ?** « C'est le mode où Angular n'utilise pas Zone.js pour déclencher globalement la détection des changements. Angular s'appuie sur ses notifications, comme les Signals; Angular 22.2 l'utilise par défaut dans ce projet. »
+5. **Quel était le rôle de Zone.js ?** « Zone.js patchait des APIs asynchrones pour signaler à Angular qu'un travail s'était terminé et qu'une vérification pouvait être nécessaire. Le projet n'en dépend pas directement et n'a pas besoin d'une migration. »
+6. **Pourquoi les Signals peuvent aider la réactivité ?** « Ils exposent des dépendances réactives que le framework peut suivre. La recherche et les états de page sont lisibles par le template, mais cela ne remplace pas le choix d'algorithmes efficaces. »
+7. **Est-ce que Signals rendent automatiquement l'application performante ?** « Non : un calcul lourd reste lourd, même s'il est déclenché réactivement. `filteredPortfolios` est adapté à la petite liste actuelle; il faudrait mesurer avant d'ajouter une optimisation de volume. »
+8. **Pourquoi mettre un cache dans un service ?** « Le service est partagé par Dashboard et PortfolioList et centralise la politique de lecture. Cela évite deux caches locaux divergents et garde les composants centrés sur leur état UI. »
+9. **Cache vs état UI ?** « Le cache conserve des données récupérées pour les réutiliser; l'état UI dit si une page charge, est en erreur ou affiche un filtre. `PortfolioService.cachedPortfolios` et les Signals de page ont ces responsabilités distinctes. »
+10. **Comment invalider un cache ?** « Il faut définir quand les données peuvent devenir obsolètes et proposer refresh/invalidation. Ici `refreshPortfolios()` force un GET et `invalidatePortfolios()` vide la valeur conservée. »
+11. **Que se passe-t-il si deux composants demandent la même donnée simultanément ?** « Avant le cache, le service garde l'Observable HTTP en cours et `shareReplay` partage le même GET. Après succès, la réponse entre dans le cache pour les lectures suivantes. »
+12. **Pourquoi ne pas utiliser NgRx ici ?** « Le besoin actuel est une collection partagée entre deux pages, avec une invalidation explicite. Un service et un Signal suffisent; NgRx ajouterait des conventions et du code sans complexité d'état correspondante. »
+13. **Comment mesurer avant d'optimiser ?** « Observer d'abord un symptôme avec les outils de performance navigateur, les traces Angular ou la taille des bundles, puis comparer avant/après. Ici le cache et `@defer` sont des exercices pédagogiques, pas des gains mesurés. »
+14. **Quelles optimisations sont réellement présentes dans le projet ?** « Les routes utilisent `loadChildren()`, la liste suit une clé `track`, et la recherche utilise debounce/switchMap. TASK-023 ajoute un cache partagé et un bloc `@defer`, sans modifier les calculs ESG. »
+15. **Quelles optimisations avons-nous ajoutées uniquement pour apprendre ?** « Le composant secondaire différé est léger, et le cache enseigne une politique explicite de lecture/refresh. Le projet ne prétend pas que ces ajouts ont été nécessaires après profilage. »
+
 ## 5. 10 relances pièges
 
 1. **Pourquoi ne pas utiliser RxJS partout ?** → RxJS décrit les flux asynchrones; Signals exposent simplement un état courant au template.
@@ -168,7 +249,7 @@ Questions orales TASK-022 :
 - `Subject` / `BehaviorSubject` — absents; les Observables HTTP et interop sont utilisés.
 - `AsyncPipe` — les flux sont consommés avec `toSignal()` ou `subscribe()`.
 - Pipes/directives personnalisés — `EsgScorePipe` et `EsgScorePresentationDirective` sont utilisés pour la présentation des scores; aucune règle ESG métier n'y est implémentée.
-- SSR/hydration, zoneless et `@defer` — non implémentés.
+- SSR/hydration — non implémentés. Zoneless est le comportement par défaut d'Angular 22.2 utilisé ici; `@defer` est ajouté à TASK-023.
 - Queries Angular (`viewChild`, `viewChildren`, `contentChild`, `contentChildren`) — étudiées conceptuellement, absentes de la production.
 
 ## 7. Réponse finale de 60 secondes

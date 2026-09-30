@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, of, startWith } from 'rxjs';
 import { DetailSection } from '../../shared/components/detail-section/detail-section';
@@ -36,8 +36,9 @@ export class Dashboard {
     { initialValue: { status: 'loading' as const } },
   );
 
-  protected readonly portfolioSummary = computed(() => this.portfolioState());
-
+  // portfolioState est déjà le Signal source lu par le template. Un computed(() =>
+  // portfolioState()) ne dérivait aucune nouvelle valeur : la lecture directe évite
+  // cette couche sans recopier l'état ni modifier le rendu.
   // Le contrat Portfolio ne contient pas de score ESG et aucun endpoint de résumé
   // ESG n'est spécifié; cette valeur reste un exemple de présentation local.
   protected readonly averageEsgScore = signal(78);
