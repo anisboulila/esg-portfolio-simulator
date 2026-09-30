@@ -53,6 +53,8 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 | HttpClient | POST/GET typés dans le service API, jamais dans les pages. | `simulation-api.service.ts` |
 | `provideHttpClient()` | Provider standalone racine rendant HttpClient injectable. | `app.config.ts` |
 | HTTP interceptor | `HttpInterceptorFn` normalise les erreurs de transport et conserve leur statut; aucun `clone()` car aucune requête n'est modifiée. | `core/http/http-error-normalization.interceptor.ts`, `app.config.ts` |
+| Custom Pipe | `EsgScorePipe` formate les scores reçus à deux décimales sans les recalculer. | `shared/pipes/esg-score.pipe.ts`, résultat Simulation |
+| Custom Directive | `EsgScorePresentationDirective` applique des classes selon le rôle UI fourni, sans seuil métier. | `shared/directives/esg-score-presentation.directive.ts`, résultat Simulation |
 | Contrats API typés | Request et Result guident l’usage TS; pas de validation runtime du JSON. | `features/simulations/models/` |
 | Gestion erreurs HTTP | L'interceptor produit `HttpTransportError`; les services conservent le mapping métier du 404 et les pages affichent l'UX. | interceptor, services API, pages |
 | Vitest / TestBed | Tests composants et services emploient TestBed et fixtures. | `src/app/**/*.spec.ts` |
@@ -126,6 +128,26 @@ Questions orales TASK-021 :
 7. **Q : Quand une query devient-elle pertinente ?** **R :** « Quand un composant doit réellement accéder à un enfant ou contenu projeté pour une interaction impossible à exprimer proprement avec input, output ou binding. Il faut pouvoir nommer ce besoin concret. »
 8. **Q : Pourquoi ne pas en ajouter une pour démontrer Angular ?** **R :** « Une API sans besoin réel ajoute du couplage et du code à maintenir. Ici les bindings et la projection répondent déjà aux interactions, conformément à NFR-005. »
 
+### TASK-022 — Pipe et Directive de présentation
+
+Le projet utilise `EsgScorePipe` pour afficher les quatre scores du `SimulationResult` à deux décimales; la pipe transforme le texte d’affichage sans modifier la donnée officielle. `EsgScorePresentationDirective` reçoit un rôle UI (`official` ou `indicator`) et applique des classes CSS à son élément hôte; elle ne lit pas le score et ne connaît aucun seuil.
+
+```text
+Pipe       valeur → texte formaté
+Directive  élément + rôle de présentation → classes CSS
+```
+
+Questions orales TASK-022 :
+
+1. **Q : Pourquoi créer un custom Pipe pour les scores ?** **R :** « Les quatre scores du résultat partagent un format fixe à deux décimales. La pipe centralise cette règle d’affichage sans changer les nombres reçus. »
+2. **Q : Pourquoi le Pipe ne calcule-t-il pas le score ESG ?** **R :** « Le backend fournit le score officiel et reste la source de vérité. La pipe ne fait que transformer sa représentation en texte. »
+3. **Q : Quelle différence entre Pipe et Directive ?** **R :** « Le Pipe transforme une valeur pour l’affichage. La Directive ajoute une présentation à un élément hôte; ici elle pose des classes à partir d’un rôle fourni. »
+4. **Q : Pourquoi mettre ces abstractions dans `shared` ?** **R :** « Elles sont indépendantes des features et réutilisables par d’autres vues. Elles dépendent du contrat numérique et d’un niveau de présentation, pas d’un service Simulation. »
+5. **Q : Que signifie standalone pour ces abstractions ?** **R :** « Angular les rend importables directement dans le composant qui les utilise, sans NgModule. Le composant résultat les déclare dans ses `imports`. »
+6. **Q : Comment la Directive accède-t-elle à son élément ?** **R :** « Elle utilise les host bindings Angular pour appliquer les classes sur l’élément portant l’attribut. Elle n’a pas besoin de manipuler le DOM directement. »
+7. **Q : Pourquoi aucun seuil ESG n’est-il dans la Directive ?** **R :** « Les seuils sont une règle backend. Le template lui fournit seulement le rôle visuel `official` ou `indicator`, que la directive convertit en classes. »
+8. **Q : Quand un binding classique suffirait-il ?** **R :** « Pour un seul élément ou une classe isolée, un binding `[class]` est souvent plus simple. La directive devient utile si plusieurs vues partagent réellement ce comportement. »
+
 ## 5. 10 relances pièges
 
 1. **Pourquoi ne pas utiliser RxJS partout ?** → RxJS décrit les flux asynchrones; Signals exposent simplement un état courant au template.
@@ -145,7 +167,7 @@ Questions orales TASK-021 :
 - NgRx/store global — l’état reste local.
 - `Subject` / `BehaviorSubject` — absents; les Observables HTTP et interop sont utilisés.
 - `AsyncPipe` — les flux sont consommés avec `toSignal()` ou `subscribe()`.
-- Directives/pipes personnalisés — absents; le contrôle de flux Angular intégré est utilisé.
+- Pipes/directives personnalisés — `EsgScorePipe` et `EsgScorePresentationDirective` sont utilisés pour la présentation des scores; aucune règle ESG métier n'y est implémentée.
 - SSR/hydration, zoneless et `@defer` — non implémentés.
 - Queries Angular (`viewChild`, `viewChildren`, `contentChild`, `contentChildren`) — étudiées conceptuellement, absentes de la production.
 

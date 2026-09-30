@@ -16,9 +16,14 @@
       <p>{{ state.result.portfolio.name }}</p>
     </header>
 
-    <section class="official-score" aria-labelledby="global-score-title">
+    <!-- La pipe formate le score reçu; la directive marque son rôle visuel officiel sans seuil métier. -->
+    <section
+      class="official-score"
+      esgScorePresentation="official"
+      aria-labelledby="global-score-title"
+    >
       <h2 id="global-score-title">Score ESG global officiel</h2>
-      <p>{{ state.result.globalScore }}</p>
+      <p>{{ state.result.globalScore | esgScore }}</p>
     </section>
 
     <dl class="simulation-result-details">
@@ -28,15 +33,15 @@
       </div>
       <div>
         <dt>Score environnemental</dt>
-        <dd>{{ state.result.environmentalScore }}</dd>
+        <dd esgScorePresentation="indicator">{{ state.result.environmentalScore | esgScore }}</dd>
       </div>
       <div>
         <dt>Score social</dt>
-        <dd>{{ state.result.socialScore }}</dd>
+        <dd esgScorePresentation="indicator">{{ state.result.socialScore | esgScore }}</dd>
       </div>
       <div>
         <dt>Score de gouvernance</dt>
-        <dd>{{ state.result.governanceScore }}</dd>
+        <dd esgScorePresentation="indicator">{{ state.result.governanceScore | esgScore }}</dd>
       </div>
       <div>
         <dt>Investissement vert (%)</dt>

@@ -5,6 +5,8 @@ import {
   SimulationNotFoundError,
 } from '../../services/simulation-api.service';
 import { SimulationResult } from '../../models/simulation-result';
+import { EsgScorePresentationDirective } from '../../../../shared/directives/esg-score-presentation.directive';
+import { EsgScorePipe } from '../../../../shared/pipes/esg-score.pipe';
 
 type SimulationResultState =
   | { status: 'loading' }
@@ -14,7 +16,7 @@ type SimulationResultState =
 
 @Component({
   selector: 'app-simulation-result',
-  imports: [RouterLink],
+  imports: [RouterLink, EsgScorePipe, EsgScorePresentationDirective],
   templateUrl: './simulation-result.html',
   styleUrl: './simulation-result.css',
 })

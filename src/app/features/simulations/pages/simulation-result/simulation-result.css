@@ -16,8 +16,6 @@
 
 .official-score {
   margin-bottom: 2rem;
-  border-left: 4px solid currentColor;
-  padding: 1rem 1.25rem;
 }
 
 .official-score h2 {
@@ -63,4 +61,14 @@
   .simulation-result-details {
     grid-template-columns: 1fr;
   }
+}
+
+.esg-score-presentation--official {
+  border-left: 4px solid currentColor;
+  padding: 1rem 1.25rem;
+}
+
+.esg-score-presentation--indicator {
+  border-left: 2px solid #ddd;
+  padding-left: 0.5rem;
 }
