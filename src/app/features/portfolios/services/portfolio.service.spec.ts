@@ -6,6 +6,8 @@ import { PortfolioApiService } from '../api/portfolio-api.service';
 import { Portfolio } from '../models/portfolio';
 import { PortfolioService } from './portfolio.service';
 
+// Cette suite teste le contrat du service avec un faux adaptateur, sans ComponentFixture
+// car le sujet est ici les données renvoyées et la politique de cache, pas le DOM.
 describe('PortfolioService', () => {
   let service: PortfolioService;
   let getPortfolios: Mock<() => Observable<readonly Portfolio[]>>;
@@ -35,6 +37,8 @@ describe('PortfolioService', () => {
 
   beforeEach(() => {
     getPortfolios = vi.fn(() => of(portfolioFixtures));
+    // TestBed fournit le vrai PortfolioService mais remplace son API avec useValue;
+    // cela rend les réponses et les erreurs contrôlables sans lancer de requête HTTP.
     TestBed.configureTestingModule({
       providers: [
         PortfolioService,

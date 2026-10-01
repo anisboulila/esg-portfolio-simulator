@@ -60,7 +60,7 @@ bootstrapApplication → App / shell → Router → feature lazy-loaded
 | Contrats API typés | Request et Result guident l’usage TS; pas de validation runtime du JSON. | `features/simulations/models/` |
 | Gestion erreurs HTTP | L'interceptor produit `HttpTransportError`; les services conservent le mapping métier du 404 et les pages affichent l'UX. | interceptor, services API, pages |
 | Vitest / TestBed | Tests composants et services emploient TestBed et fixtures. | `src/app/**/*.spec.ts` |
-| Tests composant/service/HTTP/routing | Composant, service Portfolio et routing sont couverts; tests HTTP absents. | 6 specs existantes; voir section Tests |
+| Tests composant/service/HTTP/routing | Pages, services Portfolio, API HTTP, routing et résultat sont couverts avec Vitest. | `src/app/**/*.spec.ts` |
 
 ## 4. Les 15 questions les plus probables
 
@@ -176,6 +176,12 @@ Sans clé stable, Angular peut avoir du mal à associer les éléments d'une nou
 
 Nous ne différons pas la page entière : cela rendrait le résultat principal inutilement dépendant d'un contenu secondaire. N'utilisez `@defer` que lorsqu'une dépendance est réellement optionnelle ou coûteuse; un bloc minuscule au-dessus de la ligne de flottaison pourrait ajouter du délai sans bénéfice. L'exemple est volontairement léger pour apprendre et non une optimisation mesurée.
 
+**Démonstration temporaire du chargement :** dans `simulation-result.html`, `on viewport` déclenche le bloc quand son placeholder entre dans la zone visible. `@placeholder` reste affiché avant ce déclenchement; `@loading (after 100ms)` apparaît uniquement si l'import différé prend plus de 100 ms; `@error` s'affiche si cet import échoue. Le résultat officiel reste hors du bloc et visible immédiatement.
+
+Pour rendre l'attente observable, `simulation-context.ts` contient temporairement un `await` de 2 secondes au niveau du module. Comme Angular charge ce composant via un `import()` réellement différé, l'évaluation du module garde cette Promise en attente et `@loading` reste visible jusqu'à sa résolution; ce n'est pas un timer à l'intérieur du composant après sa création. La séquence a été vérifiée sur le build development compilé en chunks : le message loading est apparu après environ 100 ms et le composant après environ 2 secondes supplémentaires.
+
+Ce délai sert exclusivement à apprendre et doit être supprimé avant production : il pénalise volontairement l'expérience pour rendre le chargement visible. Le serveur HMR `ng serve` peut préparer/évaluer les ressources de composants avant le déclenchement viewport; pour observer fidèlement le chunk différé, utiliser un build compilé servi statiquement, comme pendant la vérification de TASK-023.
+
 #### Zoneless
 
 Zone.js interceptait notamment des tâches asynchrones pour aider Angular à détecter quand vérifier les vues. Le mode Zoneless s'appuie sur les notifications Angular explicites, notamment Signals et les mécanismes de rendu du framework, sans Zone.js pour déclencher globalement ces vérifications.
@@ -229,6 +235,26 @@ Une requête en cours n'est pas encore une donnée en cache. `shareReplay` perme
 14. **Quelles optimisations sont réellement présentes dans le projet ?** « Les routes utilisent `loadChildren()`, la liste suit une clé `track`, et la recherche utilise debounce/switchMap. TASK-023 ajoute un cache partagé et un bloc `@defer`, sans modifier les calculs ESG. »
 15. **Quelles optimisations avons-nous ajoutées uniquement pour apprendre ?** « Le composant secondaire différé est léger, et le cache enseigne une politique explicite de lecture/refresh. Le projet ne prétend pas que ces ajouts ont été nécessaires après profilage. »
 
+### TASK-024 — Component Testing — Angular + Vitest
+
+`TestBed` prépare l'injecteur et les imports Angular du test. `TestBed.createComponent()` retourne une `ComponentFixture` : `componentInstance` est l'instance TypeScript, tandis que `nativeElement` est la racine DOM rendue. `fixture.detectChanges()` demande à Angular de synchroniser bindings et vue; `fixture.whenStable()` attend les tâches Angular suivies, par exemple une navigation.
+
+Les assertions DOM vérifient ce que l'utilisateur voit, plutôt que les champs privés du composant. Les tests simulent une action via un clic ou un événement `input`, puis observent le message, l'état ou la navigation résultante. `useValue` remplace une dépendance réelle par un faux service contrôlable : les composants restent réels, mais les tests ne dépendent ni du réseau ni d'un backend disponible.
+
+Exemples du projet : `portfolio-list.spec.ts` vérifie les cartes, le chargement, l'état vide après saisie et le message d'erreur; `esg-simulation-form.spec.ts` teste labels, validation, blocage invalide et soumission valide; `portfolio-routing.spec.ts` clique un lien rendu et vérifie URL et contenu. Pour le score, `simulation-result.spec.ts` vérifie que le DOM affiche exactement `82.35`, la valeur fournie par le faux backend, sans recalculer les indicateurs.
+
+Un test de composant configure le composant et ses dépendances pour vérifier rendu et interaction. Un test de service HTTP, comme `portfolio-api.service.spec.ts`, n'a pas de fixture ni de DOM : `HttpTestingController` vérifie méthode/URL, fournit la réponse avec `flush()` et confirme qu'aucune requête ne reste ouverte.
+
+Questions d'entretien :
+
+1. **Pourquoi utiliser TestBed ?** « Il construit l'environnement Angular du test et permet de remplacer des providers. Dans `PortfolioList`, il injecte un faux `PortfolioService` au lieu d'appeler le backend. »
+2. **Qu'est-ce qu'une ComponentFixture ?** « C'est le harnais de test reliant une instance de composant à sa vue. `fixture` donne accès à `componentInstance`, au DOM et à `detectChanges()`. »
+3. **Différence entre `componentInstance` et `nativeElement` ?** « Le premier est l'objet TypeScript; le second est le DOM rendu. Le test de formulaire clique le DOM et vérifie les messages affichés. »
+4. **Pourquoi appeler `detectChanges()` ?** « Pour demander à Angular d'appliquer les bindings et de rendre l'état courant. Après la saisie ou le clic, le test relit ensuite le DOM mis à jour. »
+5. **Pourquoi utiliser un fake service avec `useValue` ?** « Pour isoler le composant du transport et contrôler données, délais ou erreurs. `PortfolioList` reçoit ainsi les réponses fixtures et peut tester ses états sans HTTP. »
+6. **Pourquoi tester le DOM plutôt qu'une propriété interne ?** « Le DOM est le résultat observable par l'utilisateur et résiste mieux aux refactors internes. Les specs vérifient par exemple le texte d'erreur et le score officiel affiché. »
+7. **Différence entre test composant et test service HTTP ?** « Le test composant vérifie rendu et interaction avec une dépendance simulée; le test HTTP vérifie le contrat de transport avec `HttpTestingController`. Le premier observe le DOM, le second les requêtes. »
+
 ## 5. 10 relances pièges
 
 1. **Pourquoi ne pas utiliser RxJS partout ?** → RxJS décrit les flux asynchrones; Signals exposent simplement un état courant au template.
@@ -240,7 +266,7 @@ Une requête en cours n'est pas encore une donnée en cache. `shareReplay` perme
 7. **Où doit vivre un message d’erreur métier ?** → Dans la feature qui connaît le contexte; le service transforme l’erreur transport en type applicatif.
 8. **Pourquoi l’interceptor ne crée-t-il pas `SimulationNotFoundError` ?** → Ce type exprime une règle de la feature Simulation; l’interceptor ne conserve que le statut transport et le service fait le mapping.
 9. **Route parameter ou query parameter ?** → `:id` identifie la ressource et appartient au chemin; un query parameter est plutôt un filtre ou une option de vue.
-10. **Que manque-t-il avant production ?** → Tests HTTP/form/résultat, validation runtime éventuelle des contrats, configuration d’environnement robuste et vérification accessibilité automatisée.
+10. **Que manque-t-il avant production ?** → Une vérification d'accessibilité automatisée, validation runtime éventuelle des contrats et configuration d'environnement robuste; les tests de composants formulaire/résultat et HTTP Portfolio existent, mais ne remplacent pas une stratégie E2E complète.
 
 ## 6. Ce que je n’ai PAS utilisé
 
@@ -254,4 +280,4 @@ Une requête en cours n'est pas encore une donnée en cache. `shareReplay` perme
 
 ## 7. Réponse finale de 60 secondes
 
-« Je suis développeur Java/fullstack et j’ai construit ce projet pour apprendre Angular moderne sur un cas concret. L’application est standalone, organisée par features et route lazy-loaded; les composants délèguent données et HTTP aux services. J’ai utilisé Signals pour l’état local et RxJS pour le flux de recherche avec debounce et cancellation, puis Reactive Forms pour saisir les indicateurs. Le formulaire passe par un API service typé, et un mock HTTP Node permet de pratiquer POST/GET sans Spring Boot. Je ne recalcule pas l’ESG dans Angular : le backend reste autoritaire. J’ai aussi commencé les tests avec Vitest/TestBed pour le shell, les composants, le service Portfolio et le routing; les tests HTTP et formulaire restent à faire dans les tasks prévues. »
+« Je suis développeur Java/fullstack et j’ai construit ce projet pour apprendre Angular moderne sur un cas concret. L’application est standalone, organisée par features et route lazy-loaded; les composants délèguent données et HTTP aux services. J’ai utilisé Signals pour l’état local et RxJS pour le flux de recherche avec debounce et cancellation, puis Reactive Forms pour saisir les indicateurs. Le formulaire passe par un API service typé, et un mock HTTP Node permet de pratiquer POST/GET sans Spring Boot. Je ne recalcule pas l’ESG dans Angular : le backend reste autoritaire. Avec Vitest et TestBed, je vérifie les états du formulaire et de la liste dans le DOM, les interactions simulées, le routing et les requêtes de `PortfolioApiService` avec `HttpTestingController`; le résultat testé conserve la valeur officielle fournie. »

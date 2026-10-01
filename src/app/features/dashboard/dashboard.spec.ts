@@ -9,8 +9,11 @@ const portfolioFixtures = [
   { id: 'p3', name: 'Portfolio Sustainable', description: 'Sustainable', assetCount: 31, currentValue: 1630000 },
 ];
 
+// Cette suite teste le résultat visible du résumé plutôt que la forme de son Signal interne.
 describe('Dashboard', () => {
   it('should render the computed portfolio summary', async () => {
+    // Le provider de test substitue le service partagé; Dashboard reste réel, mais ses
+    // données déterministes n'ont pas besoin du serveur HTTP pour vérifier le DOM.
     await TestBed.configureTestingModule({
       imports: [Dashboard],
       providers: [
@@ -22,9 +25,13 @@ describe('Dashboard', () => {
       ],
     }).compileComponents();
 
+    // createComponent retourne la fixture qui relie l'instance Dashboard à sa vue rendue.
     const fixture = TestBed.createComponent(Dashboard);
+    // Angular applique les bindings et les états Signals avant les assertions DOM.
     fixture.detectChanges();
 
+    // nativeElement est le DOM créé pour cette fixture; les assertions portent sur
+    // les métriques réellement présentées à l'utilisateur.
     const summary = fixture.nativeElement as HTMLElement;
     expect(summary.querySelector('h1')?.textContent).toContain('Dashboard');
     const sections = summary.querySelectorAll('app-detail-section');

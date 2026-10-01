@@ -1,5 +1,7 @@
 import { EsgScorePipe } from './esg-score.pipe';
 
+// Une pipe pure se teste directement : aucun TestBed, fixture ou DOM n'est nécessaire
+// pour vérifier la transformation déterministe d'une valeur.
 describe('EsgScorePipe', () => {
   const pipe = new EsgScorePipe();
 
@@ -10,6 +12,7 @@ describe('EsgScorePipe', () => {
   it('should format decimals without changing the source score', () => {
     const score = 82.456;
 
+    // expect compare la sortie publique de la pipe et confirme que la source reste intacte.
     expect(pipe.transform(score)).toBe('82.46');
     expect(score).toBe(82.456);
   });

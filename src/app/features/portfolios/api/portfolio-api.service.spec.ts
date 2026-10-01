@@ -9,6 +9,8 @@ import { API_BASE_URL } from '../../../core/config/api.config';
 import { Portfolio } from '../models/portfolio';
 import { PortfolioApiService } from './portfolio-api.service';
 
+// Ces tests vérifient le contrat transport du service API; contrairement aux tests
+// de composants, ils n'ont ni ComponentFixture ni assertions sur le DOM.
 describe('PortfolioApiService', () => {
   let service: PortfolioApiService;
   let httpTesting: HttpTestingController;
@@ -22,6 +24,8 @@ describe('PortfolioApiService', () => {
   };
 
   beforeEach(() => {
+    // TestBed configure HttpClient et son backend de test; HttpTestingController permet
+    // d'observer la requête et de fournir une réponse sans serveur externe.
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -35,12 +39,15 @@ describe('PortfolioApiService', () => {
     httpTesting = TestBed.inject(HttpTestingController);
   });
 
+  // verify échoue s'il reste une requête inattendue, ce qui évite qu'un test masque un HTTP oublié.
   afterEach(() => httpTesting.verify());
 
   it('should load the typed portfolio collection from the API', async () => {
+    // firstValueFrom s'abonne à l'Observable; expectOne observe le vrai chemin demandé.
     const response = firstValueFrom(service.getPortfolios());
     const request = httpTesting.expectOne('http://mock.test/api/v1/portfolios');
 
+    // On vérifie d'abord la méthode, puis flush simule la réponse serveur consommée par le service.
     expect(request.request.method).toBe('GET');
     request.flush([portfolio]);
 

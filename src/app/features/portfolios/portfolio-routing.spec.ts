@@ -29,8 +29,12 @@ const portfolioFixtures = [
   },
 ];
 
+// La suite teste les URLs et le contenu rendu lors d'une vraie navigation Angular,
+// plutôt que d'appeler directement les méthodes internes du Router ou des pages.
 describe('Portfolio routing', () => {
   beforeEach(async () => {
+    // TestBed assemble App et Router; useValue fournit un service déterministe pour
+    // que la navigation reste indépendante du serveur Portfolio.
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -49,6 +53,8 @@ describe('Portfolio routing', () => {
   });
 
   async function createAppAt(url: string) {
+    // Une ComponentFixture crée le shell et contrôle sa vue. La première détection
+    // installe les bindings avant la navigation; whenStable attend les tâches Router.
     const fixture = TestBed.createComponent(App);
     const router = TestBed.inject(Router);
 
@@ -71,6 +77,8 @@ describe('Portfolio routing', () => {
 
   it('should navigate from the dashboard to the lazy-loaded portfolio list', async () => {
     const { fixture, router } = await createAppAt('/');
+    // querySelector récupère le lien réellement rendu; click déclenche le même événement
+    // DOM que l'action attendue d'un utilisateur sur ce lien.
     const portfolioLink = (
       fixture.nativeElement as HTMLElement
     ).querySelector<HTMLAnchorElement>('nav a[routerLink="/portfolios"]');
@@ -79,6 +87,7 @@ describe('Portfolio routing', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
+    // L'URL et le titre sont des effets observables de navigation, pas des détails privés.
     expect(router.url).toBe('/portfolios');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('h1')?.textContent,
