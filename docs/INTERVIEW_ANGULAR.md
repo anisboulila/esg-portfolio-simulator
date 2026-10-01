@@ -255,6 +255,22 @@ Questions d'entretien :
 6. **Pourquoi tester le DOM plutôt qu'une propriété interne ?** « Le DOM est le résultat observable par l'utilisateur et résiste mieux aux refactors internes. Les specs vérifient par exemple le texte d'erreur et le score officiel affiché. »
 7. **Différence entre test composant et test service HTTP ?** « Le test composant vérifie rendu et interaction avec une dépendance simulée; le test HTTP vérifie le contrat de transport avec `HttpTestingController`. Le premier observe le DOM, le second les requêtes. »
 
+### TASK-025 — Service & HTTP Testing — Angular + Vitest
+
+Dans les specs HTTP, `TestBed` prépare l'injecteur, `provideHttpClient()` rend `HttpClient` disponible et `provideHttpClientTesting()` remplace le backend réseau. `HttpTestingController.expectOne()` capture la requête déclenchée par l'abonnement, puis les assertions vérifient URL, méthode et éventuellement body. `flush()` fournit la réponse au service; `verify()` en `afterEach` détecte les requêtes oubliées. Le backend ici est simulé : les tests n'appellent pas un serveur réel.
+
+`PortfolioApiService` teste le contrat transport (URLs, méthodes, payloads et réponses HTTP). `PortfolioService` teste la logique feature, notamment cache, refresh, coalescing et mapping 404; sa spec injecte le vrai service métier et fournit l'API avec `useValue`. Ces tests ne dupliquent pas les mêmes assertions : le transport est vérifié une fois dans l'API spec, tandis que le service métier reçoit des réponses contrôlées. Les erreurs sont simulées avec `flush(null, { status, statusText })`; SimulationApiService transforme 404 en `SimulationNotFoundError` et les autres statuts testés en `SimulationApiError`.
+
+Questions d'entretien :
+
+1. **Pourquoi `provideHttpClient()` et `provideHttpClientTesting()` ?** « Le premier configure `HttpClient`; le second substitue son backend réseau par celui que le test contrôle. »
+2. **Quel est le rôle de `HttpTestingController` ?** « Il capture les requêtes émises et permet au test de répondre sans serveur externe. »
+3. **Que vérifie `expectOne()` ?** « Qu'une requête correspondant à l'URL attendue a été émise exactement une fois; le test peut ensuite inspecter méthode et body. »
+4. **Que fait `flush()` ?** « Il simule la réponse HTTP, succès ou statut d'erreur, puis fait parvenir le résultat au flux HttpClient du service. »
+5. **Pourquoi appeler `verify()` ?** « Pour faire échouer le test si une requête reste en attente ou n'a pas été explicitement consommée. »
+6. **Pourquoi `useValue` dans le test de `PortfolioService` ?** « Il remplace `PortfolioApiService`, afin de tester cache et mapping métier indépendamment du transport; l'API service est testé séparément avec le vrai backend HTTP de test. »
+7. **Pourquoi éviter de tester deux fois la même responsabilité ?** « L'API spec vérifie URL et méthode; la spec métier vérifie cache et erreurs métier. Cette séparation rend les tests ciblés et évite de les casser ensemble pour un changement interne sans effet métier. »
+
 ## 5. 10 relances pièges
 
 1. **Pourquoi ne pas utiliser RxJS partout ?** → RxJS décrit les flux asynchrones; Signals exposent simplement un état courant au template.

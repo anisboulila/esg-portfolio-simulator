@@ -63,4 +63,14 @@ describe('PortfolioApiService', () => {
 
     expect(await response).toEqual(portfolio);
   });
+
+  it('should propagate a not-found HTTP error for an unknown portfolio ID', async () => {
+    const response = firstValueFrom(service.getPortfolioById('missing'));
+    const request = httpTesting.expectOne('http://mock.test/api/v1/portfolios/missing');
+
+    // The API service owns the HTTP contract and does not map this status to a feature error.
+    request.flush(null, { status: 404, statusText: 'Not Found' });
+
+    await expect(response).rejects.toMatchObject({ status: 404 });
+  });
 });
